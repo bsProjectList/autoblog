@@ -1,0 +1,45 @@
+name: Daily AutoBlog
+
+on:
+  schedule:
+    - cron: '0 23 * * *'  # 매일 오전 8시 KST (UTC 기준 전날 23:00)
+  workflow_dispatch:        # 수동 실행 허용
+
+permissions:
+  contents: write
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browser
+        run: |
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Run AutoBlog pipeline
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python main.py
+
+      - name: Commit and push generated posts
+        run: |
+          git config user.name "AutoBlog Bot"
+          git config user.email "autoblog@github-actions[bot]"
+          git add output/
+          git diff --staged --quiet || git commit -m "📝 Daily blog posts $(date +'%Y-%m-%d KST' -d '+9 hours')"
+          git push
