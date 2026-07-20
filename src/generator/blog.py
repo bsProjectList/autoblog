@@ -1,12 +1,7 @@
-import os
 import re
 from typing import List
-from groq import Groq
+from src.llm_client import stream_completion
 from src.models import NewsItem, BlogPost, ImagePrompt
-
-client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-
-MODEL = "llama-3.3-70b-versatile"
 
 NAVER_SYSTEM = (
     "당신은 네이버 블로그 SEO 전문가입니다.\n"
@@ -237,37 +232,33 @@ def _parse_post(news: NewsItem, content: str, seo_type: str) -> BlogPost:
 
 def generate_naver_post(news: NewsItem) -> BlogPost:
     full_content = ""
-    with client.chat.completions.create(
-        model=MODEL,
+    stream = stream_completion(
         messages=[
             {"role": "system", "content": NAVER_SYSTEM},
             {"role": "user", "content": _naver_prompt(news)},
         ],
         temperature=0.9,
         max_tokens=10000,
-        stream=True,
-    ) as stream:
-        for chunk in stream:
-            delta = chunk.choices[0].delta.content
-            if delta:
-                full_content += delta
+    )
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            full_content += delta
     return _parse_post(news, full_content, "naver")
 
 
 def generate_google_post(news: NewsItem) -> BlogPost:
     full_content = ""
-    with client.chat.completions.create(
-        model=MODEL,
+    stream = stream_completion(
         messages=[
             {"role": "system", "content": GOOGLE_SYSTEM},
             {"role": "user", "content": _google_prompt(news)},
         ],
         temperature=0.7,
         max_tokens=12000,
-        stream=True,
-    ) as stream:
-        for chunk in stream:
-            delta = chunk.choices[0].delta.content
-            if delta:
-                full_content += delta
+    )
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            full_content += delta
     return _parse_post(news, full_content, "google")

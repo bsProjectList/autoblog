@@ -34,6 +34,7 @@ jobs:
       - name: Run AutoBlog pipeline
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: python main.py
 
       - name: Commit and push generated posts

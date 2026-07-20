@@ -1,13 +1,8 @@
-import os
 import json
 import re
 from typing import List
-from groq import Groq
+from src.llm_client import chat_completion
 from src.models import NewsItem
-
-client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-
-MODEL = "llama-3.3-70b-versatile"
 
 SYSTEM_PROMPT = (
     "당신은 경제 뉴스 에디터입니다. 블로그 트래픽 극대화를 위해 뉴스를 평가하고 TOP 10을 선정합니다.\n\n"
@@ -55,8 +50,7 @@ def score_and_select_top10(news_items: List[NewsItem], top_n: int = 10) -> List[
 
 index는 위 뉴스 목록의 번호입니다. score는 100점 만점입니다."""
 
-    response = client.chat.completions.create(
-        model=MODEL,
+    response = chat_completion(
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt},

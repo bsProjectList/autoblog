@@ -12,6 +12,12 @@ from src.generator.blog import generate_naver_post, generate_google_post
 from src.models import BlogPost, NewsItem
 
 OUTPUT_DIR = Path("output")
+TOP_N = 6  # Groq 무료 티어 일일 토큰 한도(TPD 100K) 내에서 안전하게 처리 가능한 뉴스 개수
+
+SEO_GENERATORS = [
+    (generate_naver_post, "Naver SEO"),
+    (generate_google_post, "Google SEO"),
+]
 
 
 def deduplicate(items: list) -> list:
@@ -37,72 +43,76 @@ def save_post(post: BlogPost, date_str: str) -> Path:
     return output_path
 
 
-def run_pipeline():
+def run_pipeline(top_n: int = TOP_N, seo_generators=None, on_log=print) -> list:
+    seo_generators = SEO_GENERATORS if seo_generators is None else seo_generators
     date_str = datetime.now().strftime("%Y-%m-%d")
     divider = "=" * 60
 
-    print(f"\n{divider}")
-    print(f"  AutoBlog Pipeline — {date_str}")
-    print(f"{divider}\n")
+    on_log(f"\n{divider}")
+    on_log(f"  AutoBlog Pipeline — {date_str}")
+    on_log(f"{divider}\n")
 
     # ── Step 1: Collect ──────────────────────────────────────────
-    print("[1단계] RSS 피드에서 뉴스 수집 중...")
+    on_log("[1단계] RSS 피드에서 뉴스 수집 중...")
     rss_items = collect_rss_news()
 
-    print("\n[1단계] 네이버 경제 뉴스 크롤링 중...")
+    on_log("\n[1단계] 네이버 경제 뉴스 크롤링 중...")
     naver_items = crawl_naver_economy()
 
     all_items = deduplicate(rss_items + naver_items)
-    print(f"\n[1단계] 중복 제거 후 총 {len(all_items)}건")
+    on_log(f"\n[1단계] 중복 제거 후 총 {len(all_items)}건")
 
     if not all_items:
-        print("[오류] 수집된 뉴스가 없습니다. 종료합니다.")
-        sys.exit(1)
+        on_log("[오류] 수집된 뉴스가 없습니다. 종료합니다.")
+        return []
 
     # ── Step 2: Analyze ──────────────────────────────────────────
-    print("\n[2단계] 중요도 분석 및 TOP 10 선정 중...")
-    top10 = score_and_select_top10(all_items)
+    on_log(f"\n[2단계] 중요도 분석 및 TOP {top_n} 선정 중...")
+    top_items = score_and_select_top10(all_items, top_n=top_n)
 
-    if not top10:
-        print("[오류] TOP 10 선정 실패. 종료합니다.")
-        sys.exit(1)
+    if not top_items:
+        on_log(f"[오류] TOP {top_n} 선정 실패. 종료합니다.")
+        return []
 
-    print(f"\n  선정된 TOP {len(top10)}:")
-    for item in top10:
-        print(f"    {item.rank:2d}. [{item.importance_score:3.0f}점] {item.title[:55]}")
+    on_log(f"\n  선정된 TOP {len(top_items)}:")
+    for item in top_items:
+        on_log(f"    {item.rank:2d}. [{item.importance_score:3.0f}점] {item.title[:55]}")
 
     # ── Step 3: Generate ─────────────────────────────────────────
-    print(f"\n[3단계] 블로그 포스트 생성 ({len(top10) * 2}개 예정)...")
+    on_log(f"\n[3단계] 블로그 포스트 생성 ({len(top_items) * len(seo_generators)}개 예정)...")
 
     saved: list = []
     errors: list = []
 
-    for news in top10:
-        print(f"\n  [{news.rank:2d}/{len(top10)}] {news.title[:50]}")
+    for news in top_items:
+        on_log(f"\n  [{news.rank:2d}/{len(top_items)}] {news.title[:50]}")
 
-        for gen_fn, label in [(generate_naver_post, "Naver SEO"), (generate_google_post, "Google SEO")]:
-            print(f"    → {label} 생성 중...", end=" ", flush=True)
+        for gen_fn, label in seo_generators:
+            on_log(f"    → {label} 생성 중...")
             try:
                 post = gen_fn(news)
                 path = save_post(post, date_str)
                 saved.append(path)
-                print("완료")
+                on_log(f"    → {label} 완료: {path}")
             except Exception as e:
-                print(f"실패\n    [오류] {label}: {e}")
+                on_log(f"    → {label} 실패: {e}")
                 errors.append((news.title, label, str(e)))
 
     # ── Summary ──────────────────────────────────────────────────
-    print(f"\n{divider}")
-    print(f"  파이프라인 완료")
-    print(f"  날짜: {date_str}")
-    print(f"  생성된 포스트: {len(saved)}개 / 목표 {len(top10) * 2}개")
-    print(f"  저장 위치: {OUTPUT_DIR / date_str}")
+    on_log(f"\n{divider}")
+    on_log(f"  파이프라인 완료")
+    on_log(f"  날짜: {date_str}")
+    on_log(f"  생성된 포스트: {len(saved)}개 / 목표 {len(top_items) * len(seo_generators)}개")
+    on_log(f"  저장 위치: {OUTPUT_DIR / date_str}")
     if errors:
-        print(f"  오류: {len(errors)}건")
+        on_log(f"  오류: {len(errors)}건")
         for title, label, err in errors:
-            print(f"    - [{label}] {title[:40]}: {err[:60]}")
-    print(f"{divider}\n")
+            on_log(f"    - [{label}] {title[:40]}: {err[:60]}")
+    on_log(f"{divider}\n")
+
+    return saved
 
 
 if __name__ == "__main__":
-    run_pipeline()
+    if not run_pipeline():
+        sys.exit(1)

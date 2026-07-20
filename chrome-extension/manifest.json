@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "AutoBlog 상품 정보 추출기",
+  "version": "1.0.0",
+  "description": "쇼핑몰 상품 페이지의 정보(상품명/가격/이미지)를 추출해 클립보드에 복사합니다.",
+  "permissions": ["activeTab", "scripting", "clipboardWrite"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_title": "이 페이지의 상품 정보 추출하기"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
