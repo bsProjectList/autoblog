@@ -33,6 +33,7 @@ def _naver_prompt(news: NewsItem) -> str:
 - AI 티 완전 제거
 - 핵심 키워드를 제목과 본문에 자연스럽게 삽입
 - 각 섹션을 충분히 깊이 있게 서술. 내용이 부족하면 관련 배경지식·사례·통계를 추가
+- [중요] 아래 [포스트 구조]에 있는 '## 태그' 섹션에서 절대 끝내지 마세요. 그 뒤에 이어지는 [이미지 프롬프트] 섹션(THUMBNAIL, BODY_1, BODY_2, BODY_3 4줄)까지 반드시 작성해야 응답이 완료된 것입니다.
 
 [가독성 규칙 — 반드시 준수]
 - 한 문단은 3~4문장으로 제한. 절대 긴 문단 금지
@@ -83,7 +84,7 @@ def _naver_prompt(news: NewsItem) -> str:
 ## 태그
 (#태그 형식으로 20개)
 
-[이미지 프롬프트 — 영어로 작성]
+[이미지 프롬프트 — 영어로 작성 — 이 섹션 없이 끝내면 안 됨, 반드시 4줄 모두 작성]
 **THUMBNAIL**: realistic, professional news article style, 16:9, 4K, (썸네일 묘사)
 **BODY_1**: realistic, 16:9, 4K, (뉴스 핵심 내용 시각화)
 **BODY_2**: realistic, financial chart or market scene, 16:9, 4K, (시장 영향 시각화)
@@ -106,6 +107,7 @@ def _google_prompt(news: NewsItem) -> str:
 - 첫 단락에 핵심 답변 포함 (Featured Snippet 최적화)
 - FAQ 섹션 필수 (5개 Q&A)
 - JSON-LD Article Schema 필수
+- [중요] '## 관련 태그' 섹션에서 절대 끝내지 마세요. 그 뒤에 이어지는 [이미지 프롬프트] 4줄과 [JSON-LD Schema]까지 반드시 작성해야 응답이 완료된 것입니다.
 
 [가독성 규칙 — 반드시 준수]
 - 한 문단은 3~4문장으로 제한. 절대 긴 문단 금지
@@ -158,7 +160,7 @@ def _google_prompt(news: NewsItem) -> str:
 ## 관련 태그
 (#태그 20개)
 
-[이미지 프롬프트 — 영어]
+[이미지 프롬프트 — 영어 — 이 섹션 없이 끝내면 안 됨, 반드시 4줄 모두 작성]
 **THUMBNAIL**: realistic, professional, 16:9, 4K, (썸네일 묘사)
 **BODY_1**: realistic, news style, 16:9, 4K, (핵심 장면)
 **BODY_2**: realistic, financial/market, 16:9, 4K, (시장 영향)
@@ -200,7 +202,25 @@ def _extract_image_prompts(content: str) -> List[ImagePrompt]:
     return prompts
 
 
+def _insert_source_line(content: str, news: NewsItem) -> str:
+    if not news.source and not news.url:
+        return content
+
+    parts = [f"출처: {news.source}"] if news.source else []
+    if news.url:
+        parts.append(f"[원문 보기]({news.url})")
+    source_line = "> " + " · ".join(parts)
+
+    lines = content.split("\n", 1)
+    if lines and lines[0].startswith("#"):
+        rest = lines[1].lstrip("\n") if len(lines) > 1 else ""
+        return lines[0] + "\n\n" + source_line + "\n\n" + rest
+    return source_line + "\n\n" + content
+
+
 def _parse_post(news: NewsItem, content: str, seo_type: str) -> BlogPost:
+    content = _insert_source_line(content, news)
+
     title_match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
     title = title_match.group(1).strip() if title_match else news.title
 

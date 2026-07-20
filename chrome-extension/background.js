@@ -50,8 +50,30 @@ async function extractAndCopy() {
     await new Promise((r) => setTimeout(r, 200));
   }
 
+  function extractReviews() {
+    const MAX_REVIEWS = 8;
+    const seen = new Set();
+    const snippets = [];
+    const nodes = document.querySelectorAll(
+      '[class*="review" i], [id*="review" i], [class*="comment" i]'
+    );
+    for (const node of nodes) {
+      if (snippets.length >= MAX_REVIEWS) break;
+      const text = (node.innerText || "").trim().replace(/\s+/g, " ");
+      if (!text || text.length < 15 || text.length > 400) continue;
+      if (seen.has(text)) continue;
+      const isDuplicate = snippets.some((s) => s.includes(text) || text.includes(s));
+      if (isDuplicate) continue;
+      seen.add(text);
+      snippets.push(text);
+    }
+    return snippets;
+  }
+
   showToast("⏳ 상세 이미지 로딩을 위해 페이지를 스크롤하는 중...");
   await autoScrollToLoadImages();
+
+  const reviews = extractReviews();
 
   const title = meta("og:title") || document.title.trim();
   const description = meta("og:description") || "";
@@ -81,10 +103,13 @@ async function extractAndCopy() {
     price,
     description,
     image_urls: images,
+    reviews,
   };
 
   navigator.clipboard
     .writeText(JSON.stringify(data))
-    .then(() => showToast(`✅ 상품 정보 + 이미지 ${images.length}개가 클립보드에 복사되었습니다.`))
+    .then(() =>
+      showToast(`✅ 상품 정보 + 이미지 ${images.length}개 + 리뷰 ${reviews.length}개가 클립보드에 복사되었습니다.`)
+    )
     .catch((err) => showToast("❌ 클립보드 복사 실패: " + err));
 }

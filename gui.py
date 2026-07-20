@@ -9,6 +9,7 @@ from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
 from PIL import Image, ImageTk
+import pyperclip
 
 load_dotenv()
 
@@ -34,8 +35,10 @@ class AutoBlogGUI(tk.Tk):
 
         self._current_folder = None
         self._current_post = None
+        self._current_raw_content = None
         self._product_images = []
         self._product_photos = []
+        self._product_reviews = []
 
         self._build_viewer_tab()
         self._build_affiliate_tab()
@@ -61,6 +64,11 @@ class AutoBlogGUI(tk.Tk):
 
         right = ttk.Frame(self.viewer_tab)
         right.pack(side="left", fill="both", expand=True, padx=8, pady=8)
+
+        right_toolbar = ttk.Frame(right)
+        right_toolbar.pack(fill="x", pady=(0, 5))
+        ttk.Button(right_toolbar, text="마크다운으로 복사", command=self._copy_markdown).pack(side="left")
+
         self.content_text = scrolledtext.ScrolledText(right, wrap="word")
         self.content_text.pack(fill="both", expand=True)
         self.content_text.tag_configure("h1", font=("Segoe UI", 18, "bold"), spacing3=6)
@@ -97,7 +105,16 @@ class AutoBlogGUI(tk.Tk):
             return
         filename = self.file_list.get(sel[0])
         path = self._current_folder / filename
-        self._render_markdown(path.read_text(encoding="utf-8"))
+        self._current_raw_content = path.read_text(encoding="utf-8")
+        self._render_markdown(self._current_raw_content)
+
+    def _copy_markdown(self):
+        raw = getattr(self, "_current_raw_content", None)
+        if not raw:
+            messagebox.showwarning("알림", "먼저 왼쪽에서 파일을 선택하세요.")
+            return
+        pyperclip.copy(raw)
+        messagebox.showinfo("복사 완료", "마크다운 원문이 클립보드에 복사되었습니다.")
 
     def _render_markdown(self, text):
         self.content_text.delete("1.0", tk.END)
@@ -246,6 +263,7 @@ class AutoBlogGUI(tk.Tk):
         self.price_var.set(product["price"])
         self.desc_text.delete("1.0", tk.END)
         self.desc_text.insert("1.0", product["description"])
+        self._product_reviews = []
 
         self.status_var.set("상품 이미지 다운로드 중...")
         self.progress.start(10)
@@ -264,7 +282,7 @@ class AutoBlogGUI(tk.Tk):
 
     def _paste_from_clipboard(self):
         try:
-            raw = self.clipboard_get()
+            raw = pyperclip.paste()
             data = json.loads(raw)
         except Exception as e:
             messagebox.showerror(
@@ -285,6 +303,7 @@ class AutoBlogGUI(tk.Tk):
             "price": data.get("price", ""),
             "description": data.get("description", ""),
         }
+        self._product_reviews = data.get("reviews", [])
 
         self.status_var.set("클립보드에서 정보를 가져왔습니다. 처리 중...")
         self.progress.start(10)
@@ -332,6 +351,7 @@ class AutoBlogGUI(tk.Tk):
         self.status_var.set("상품 정보 가져오는 중...")
         self.progress.start(10)
         self._product_images = []
+        self._product_reviews = []
         self._clear_image_preview()
 
         def task():
@@ -395,6 +415,7 @@ class AutoBlogGUI(tk.Tk):
             "title": self.name_var.get().strip(),
             "price": self.price_var.get().strip(),
             "description": self.desc_text.get("1.0", tk.END).strip(),
+            "reviews": self._product_reviews,
         }
 
         image_count = len(self._product_images)

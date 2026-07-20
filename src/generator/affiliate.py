@@ -22,6 +22,17 @@ def _image_placement_instructions(image_count: int) -> str:
 - 자리표시자는 단독 줄에 배치하고 앞뒤로 빈 줄을 둘 것"""
 
 
+def _reviews_block(reviews) -> str:
+    if not reviews:
+        return ""
+    joined = "\n".join(f"- {r}" for r in reviews[:8])
+    return f"""
+
+[실제 구매자 리뷰 — 참고용]
+아래는 실제 구매자들이 남긴 리뷰 일부입니다. 그대로 베끼지 말고, 자주 언급되는 장점·단점·사용 경험을 자연스럽게 본문에 녹여서 신뢰도를 높이세요.
+{joined}"""
+
+
 def _prompt(product: Dict[str, str], url: str, image_count: int = 0) -> str:
     return f"""다음 상품 정보를 바탕으로 {product.get('platform', '')} 제휴 링크 홍보용 블로그 포스트를 작성하세요.
 
@@ -31,6 +42,7 @@ def _prompt(product: Dict[str, str], url: str, image_count: int = 0) -> str:
 가격: {product.get('price', '') or '정보 없음'}
 설명: {product.get('description', '') or '정보 없음'}
 구매 링크: {url}
+{_reviews_block(product.get('reviews'))}
 
 [작성 조건]
 - 분량: 2000자 이상
