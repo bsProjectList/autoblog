@@ -10,6 +10,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from PIL import Image, ImageTk
 import pyperclip
+import ttkbootstrap as tb
 
 load_dotenv()
 
@@ -17,32 +18,75 @@ OUTPUT_DIR = Path("output")
 AFFILIATE_DIR = OUTPUT_DIR / "affiliate"
 
 
-class AutoBlogGUI(tk.Tk):
+class AutoBlogGUI(tb.Window):
     def __init__(self):
-        super().__init__()
-        self.title("AutoBlog")
-        self.geometry("1000x720")
+        super().__init__(title="AutoBlog", themename="flatly")
+        self.geometry("1080x760")
+        self.colors = self.style.colors
 
         notebook = ttk.Notebook(self)
-        notebook.pack(fill="both", expand=True)
+        notebook.pack(fill="both", expand=True, padx=8, pady=8)
+        self.notebook = notebook
 
         self.viewer_tab = ttk.Frame(notebook)
         self.affiliate_tab = ttk.Frame(notebook)
+        self.blog_writer_tab = ttk.Frame(notebook)
+        self.sns_promo_tab = ttk.Frame(notebook)
         self.pipeline_tab = ttk.Frame(notebook)
         notebook.add(self.viewer_tab, text="생성된 글 보기")
         notebook.add(self.affiliate_tab, text="제휴 글 생성")
+        notebook.add(self.blog_writer_tab, text="블로그 글 작성")
+        notebook.add(self.sns_promo_tab, text="SNS 홍보")
         notebook.add(self.pipeline_tab, text="파이프라인 실행")
 
         self._current_folder = None
         self._current_post = None
         self._current_raw_content = None
+        self._current_file_path = None
         self._product_images = []
         self._product_photos = []
         self._product_reviews = []
+        self._naver_writer_post = None
+        self._tistory_writer_post = None
+        self._naver_writer_last_path = None
+        self._tistory_writer_last_path = None
 
         self._build_viewer_tab()
         self._build_affiliate_tab()
+        self._build_blog_writer_tab()
+        self._build_sns_promo_tab()
         self._build_pipeline_tab()
+
+    # ---------------- 테마 헬퍼 ----------------
+    def _style_text_widget(self, widget):
+        widget.configure(
+            bg=self.colors.inputbg,
+            fg=self.colors.inputfg,
+            insertbackground=self.colors.inputfg,
+            selectbackground=self.colors.selectbg,
+            selectforeground=self.colors.selectfg,
+            relief="flat",
+            highlightthickness=1,
+            highlightbackground=self.colors.border,
+            highlightcolor=self.colors.primary,
+            padx=6,
+            pady=6,
+        )
+        return widget
+
+    def _style_listbox(self, widget):
+        widget.configure(
+            bg=self.colors.inputbg,
+            fg=self.colors.inputfg,
+            selectbackground=self.colors.primary,
+            selectforeground=self.colors.selectfg,
+            relief="flat",
+            highlightthickness=1,
+            highlightbackground=self.colors.border,
+            highlightcolor=self.colors.primary,
+            borderwidth=0,
+        )
+        return widget
 
     # ---------------- 생성된 글 보기 ----------------
     def _build_viewer_tab(self):
@@ -51,25 +95,45 @@ class AutoBlogGUI(tk.Tk):
         left.pack_propagate(False)
 
         ttk.Label(left, text="날짜").pack(anchor="w")
-        self.date_list = tk.Listbox(left, height=12)
+        self.date_list = self._style_listbox(tk.Listbox(left, height=12))
         self.date_list.pack(fill="x")
         self.date_list.bind("<<ListboxSelect>>", self._on_date_select)
 
         ttk.Label(left, text="파일").pack(anchor="w", pady=(10, 0))
-        self.file_list = tk.Listbox(left)
+        self.file_list = self._style_listbox(tk.Listbox(left))
         self.file_list.pack(fill="both", expand=True)
         self.file_list.bind("<<ListboxSelect>>", self._on_file_select)
 
-        ttk.Button(left, text="새로고침", command=self._refresh_dates).pack(fill="x", pady=5)
+        tb.Button(left, text="새로고침", command=self._refresh_dates, bootstyle="secondary").pack(fill="x", pady=5)
 
         right = ttk.Frame(self.viewer_tab)
         right.pack(side="left", fill="both", expand=True, padx=8, pady=8)
 
         right_toolbar = ttk.Frame(right)
         right_toolbar.pack(fill="x", pady=(0, 5))
-        ttk.Button(right_toolbar, text="마크다운으로 복사", command=self._copy_markdown).pack(side="left")
+        tb.Button(right_toolbar, text="마크다운으로 복사", command=self._copy_markdown, bootstyle="secondary").pack(side="left")
+        tb.Button(right_toolbar, text="일반 글로 복사", command=self._copy_plain_text, bootstyle="secondary").pack(
+            side="left", padx=5
+        )
+        tb.Button(
+            right_toolbar, text="SNS 홍보 문구 만들기", command=self._send_viewer_post_to_sns, bootstyle="info"
+        ).pack(side="left", padx=5)
+        tb.Button(right_toolbar, text="SEO 진단", command=self._run_viewer_seo_check, bootstyle="warning").pack(side="left")
 
-        self.content_text = scrolledtext.ScrolledText(right, wrap="word")
+        publish_row = ttk.Frame(right)
+        publish_row.pack(fill="x", pady=(0, 5))
+        self.viewer_publish_status_var = tk.StringVar(value="상태: -")
+        ttk.Label(publish_row, textvariable=self.viewer_publish_status_var).pack(side="left")
+        ttk.Label(publish_row, text="게시 URL:").pack(side="left", padx=(15, 3))
+        self.viewer_publish_url_var = tk.StringVar()
+        ttk.Entry(publish_row, textvariable=self.viewer_publish_url_var, width=40).pack(
+            side="left", fill="x", expand=True, padx=3
+        )
+        tb.Button(
+            publish_row, text="게시완료로 표시", command=self._mark_viewer_post_published, bootstyle="success"
+        ).pack(side="left")
+
+        self.content_text = self._style_text_widget(scrolledtext.ScrolledText(right, wrap="word"))
         self.content_text.pack(fill="both", expand=True)
         self.content_text.tag_configure("h1", font=("Segoe UI", 18, "bold"), spacing3=6)
         self.content_text.tag_configure("h2", font=("Segoe UI", 14, "bold"), spacing3=4)
@@ -83,7 +147,7 @@ class AutoBlogGUI(tk.Tk):
         if not OUTPUT_DIR.exists():
             return
         dates = sorted(
-            (d.name for d in OUTPUT_DIR.iterdir() if d.is_dir() and d.name != "affiliate"),
+            (d.name for d in OUTPUT_DIR.iterdir() if d.is_dir() and d.name not in ("affiliate", "blog_writer")),
             reverse=True,
         )
         for d in dates:
@@ -105,8 +169,68 @@ class AutoBlogGUI(tk.Tk):
             return
         filename = self.file_list.get(sel[0])
         path = self._current_folder / filename
+        self._current_file_path = path
         self._current_raw_content = path.read_text(encoding="utf-8")
         self._render_markdown(self._current_raw_content)
+
+        from src.publish_status import get_status
+        status = get_status(str(path))
+        if status["status"] == "published":
+            self.viewer_publish_status_var.set("상태: 게시됨")
+            self.viewer_publish_url_var.set(status["url"])
+        else:
+            self.viewer_publish_status_var.set("상태: 초안")
+            self.viewer_publish_url_var.set("")
+
+    def _mark_viewer_post_published(self):
+        path = getattr(self, "_current_file_path", None)
+        if not path:
+            messagebox.showwarning("알림", "먼저 왼쪽에서 파일을 선택하세요.")
+            return
+        url = self.viewer_publish_url_var.get().strip()
+        if not url:
+            messagebox.showwarning("알림", "게시된 글의 URL을 입력하세요.")
+            return
+        from src.publish_status import set_published
+        set_published(str(path), url)
+        self.viewer_publish_status_var.set("상태: 게시됨")
+        messagebox.showinfo("완료", "게시 상태로 표시했습니다.")
+
+    def _run_viewer_seo_check(self):
+        raw = getattr(self, "_current_raw_content", None)
+        if not raw:
+            messagebox.showwarning("알림", "먼저 왼쪽에서 파일을 선택하세요.")
+            return
+        self._show_seo_check_dialog(raw)
+
+    def _show_seo_check_dialog(self, content):
+        from src.seo_check import run_seo_check
+        results = run_seo_check(content)
+
+        dialog = tk.Toplevel(self)
+        dialog.title("SEO 진단 결과")
+        dialog.geometry("520x420")
+        dialog.configure(bg=self.colors.bg)
+
+        icons = {"pass": "✅", "warn": "⚠️", "fail": "❌", "info": "ℹ️"}
+        text = self._style_text_widget(scrolledtext.ScrolledText(dialog, wrap="word"))
+        text.pack(fill="both", expand=True, padx=10, pady=10)
+        for item in results:
+            icon = icons.get(item["status"], "•")
+            text.insert(tk.END, f"{icon} {item['label']}\n    {item['detail']}\n\n")
+        text.config(state="disabled")
+
+    def _strip_markdown_to_plain(self, content: str) -> str:
+        text = content
+        text = re.sub(r"!\[[^\]]*\]\([^)]+\)", "", text)
+        text = re.sub(r"```[a-zA-Z]*\n?", "", text)
+        text = re.sub(r"^#{1,6}\s+", "", text, flags=re.MULTILINE)
+        text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
+        text = re.sub(r"^>\s?", "", text, flags=re.MULTILINE)
+        text = re.sub(r"^\s*[-*]\s+", "• ", text, flags=re.MULTILINE)
+        text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1 (\2)", text)
+        text = re.sub(r"\n{3,}", "\n\n", text)
+        return text.strip()
 
     def _copy_markdown(self):
         raw = getattr(self, "_current_raw_content", None)
@@ -115,6 +239,28 @@ class AutoBlogGUI(tk.Tk):
             return
         pyperclip.copy(raw)
         messagebox.showinfo("복사 완료", "마크다운 원문이 클립보드에 복사되었습니다.")
+
+    def _copy_plain_text(self):
+        raw = getattr(self, "_current_raw_content", None)
+        if not raw:
+            messagebox.showwarning("알림", "먼저 왼쪽에서 파일을 선택하세요.")
+            return
+        pyperclip.copy(self._strip_markdown_to_plain(raw))
+        messagebox.showinfo("복사 완료", "일반 텍스트로 클립보드에 복사되었습니다.")
+
+    def _send_viewer_post_to_sns(self):
+        raw = getattr(self, "_current_raw_content", None)
+        if not raw:
+            messagebox.showwarning("알림", "먼저 왼쪽에서 파일을 선택하세요.")
+            return
+        title_match = re.search(r"^#\s+(.+)$", raw, re.MULTILINE)
+        title = title_match.group(1).strip() if title_match else ""
+
+        from src.publish_status import get_status
+        path = getattr(self, "_current_file_path", None)
+        url = get_status(str(path))["url"] if path else ""
+
+        self._send_to_sns_tab(title, raw, url)
 
     def _render_markdown(self, text):
         self.content_text.delete("1.0", tk.END)
@@ -143,9 +289,9 @@ class AutoBlogGUI(tk.Tk):
         ttk.Label(search_row, text="키워드:").pack(side="left")
         self.coupang_keyword_entry = ttk.Entry(search_row)
         self.coupang_keyword_entry.pack(side="left", fill="x", expand=True, padx=5)
-        ttk.Button(search_row, text="검색", command=self._search_coupang).pack(side="left")
+        tb.Button(search_row, text="검색", command=self._search_coupang, bootstyle="primary").pack(side="left")
 
-        self.coupang_result_list = tk.Listbox(coupang_box, height=5)
+        self.coupang_result_list = self._style_listbox(tk.Listbox(coupang_box, height=5))
         self.coupang_result_list.pack(fill="x", padx=5, pady=(0, 5))
         self.coupang_result_list.bind("<<ListboxSelect>>", self._on_coupang_result_select)
         self._coupang_results = []
@@ -158,8 +304,10 @@ class AutoBlogGUI(tk.Tk):
         url_row.pack(fill="x", pady=5)
         self.url_entry = ttk.Entry(url_row)
         self.url_entry.pack(side="left", fill="x", expand=True)
-        ttk.Button(url_row, text="정보 가져오기", command=self._fetch_product).pack(side="left", padx=5)
-        ttk.Button(url_row, text="클립보드에서 붙여넣기", command=self._paste_from_clipboard).pack(side="left", padx=5)
+        tb.Button(url_row, text="정보 가져오기", command=self._fetch_product, bootstyle="primary").pack(side="left", padx=5)
+        tb.Button(url_row, text="클립보드에서 붙여넣기", command=self._paste_from_clipboard, bootstyle="secondary").pack(
+            side="left", padx=5
+        )
 
         info = ttk.LabelFrame(self.affiliate_tab, text="상품 정보 (자동 수집 실패 시 직접 입력)")
         info.pack(fill="x", padx=10, pady=5)
@@ -178,12 +326,12 @@ class AutoBlogGUI(tk.Tk):
         ttk.Entry(info, textvariable=self.price_var).grid(row=2, column=1, sticky="ew", padx=5, pady=3)
 
         ttk.Label(info, text="설명:").grid(row=3, column=0, sticky="nw", padx=5, pady=3)
-        self.desc_text = tk.Text(info, height=3)
+        self.desc_text = self._style_text_widget(tk.Text(info, height=3))
         self.desc_text.grid(row=3, column=1, sticky="ew", padx=5, pady=3)
 
         image_box = ttk.LabelFrame(self.affiliate_tab, text="상품 이미지")
         image_box.pack(fill="x", padx=10, pady=(0, 5))
-        self.image_canvas = tk.Canvas(image_box, height=140, highlightthickness=0)
+        self.image_canvas = tk.Canvas(image_box, height=140, highlightthickness=0, bg=self.colors.bg)
         image_scrollbar = ttk.Scrollbar(image_box, orient="horizontal", command=self.image_canvas.xview)
         self.image_canvas.configure(xscrollcommand=image_scrollbar.set)
         self.image_canvas.pack(fill="x", padx=5, pady=(5, 0))
@@ -201,9 +349,9 @@ class AutoBlogGUI(tk.Tk):
 
         btn_frame = ttk.Frame(self.affiliate_tab)
         btn_frame.pack(fill="x", padx=10, pady=5)
-        self.generate_btn = ttk.Button(btn_frame, text="글 생성", command=self._generate_post)
+        self.generate_btn = tb.Button(btn_frame, text="글 생성", command=self._generate_post, bootstyle="primary")
         self.generate_btn.pack(side="left")
-        self.save_btn = ttk.Button(btn_frame, text="저장", command=self._save_post, state="disabled")
+        self.save_btn = tb.Button(btn_frame, text="저장", command=self._save_post, state="disabled", bootstyle="success")
         self.save_btn.pack(side="left", padx=5)
 
         self.status_var = tk.StringVar(value="대기 중")
@@ -211,7 +359,7 @@ class AutoBlogGUI(tk.Tk):
         self.progress = ttk.Progressbar(self.affiliate_tab, mode="indeterminate")
         self.progress.pack(fill="x", padx=10, pady=(0, 5))
 
-        self.result_text = scrolledtext.ScrolledText(self.affiliate_tab, wrap="word", height=18)
+        self.result_text = self._style_text_widget(scrolledtext.ScrolledText(self.affiliate_tab, wrap="word", height=18))
         self.result_text.pack(fill="both", expand=True, padx=10, pady=5)
 
     def _search_coupang(self):
@@ -498,6 +646,450 @@ class AutoBlogGUI(tk.Tk):
         messagebox.showinfo("저장 완료", str(path))
         self._refresh_dates()
 
+    # ---------------- 블로그 글 작성 ----------------
+    def _build_blog_writer_tab(self):
+        inner = ttk.Notebook(self.blog_writer_tab)
+        inner.pack(fill="both", expand=True)
+
+        self.naver_writer_tab = ttk.Frame(inner)
+        self.tistory_writer_tab = ttk.Frame(inner)
+        inner.add(self.naver_writer_tab, text="네이버 블로그")
+        inner.add(self.tistory_writer_tab, text="티스토리 블로그")
+
+        self._build_naver_writer_tab()
+        self._build_tistory_writer_tab()
+
+    def _build_naver_writer_tab(self):
+        tab = self.naver_writer_tab
+
+        ttk.Label(tab, text="뉴스 원문 붙여넣기:").pack(anchor="w", padx=10, pady=(10, 0))
+        self.naver_input_text = self._style_text_widget(scrolledtext.ScrolledText(tab, wrap="word", height=10))
+        self.naver_input_text.pack(fill="both", expand=False, padx=10, pady=5)
+
+        btn_frame = ttk.Frame(tab)
+        btn_frame.pack(fill="x", padx=10, pady=5)
+        self.naver_generate_btn = tb.Button(
+            btn_frame, text="글 생성", command=self._generate_naver_writer_post, bootstyle="primary"
+        )
+        self.naver_generate_btn.pack(side="left")
+        self.naver_copy_btn = tb.Button(
+            btn_frame, text="마크다운으로 복사", command=self._copy_naver_writer_markdown, state="disabled", bootstyle="secondary"
+        )
+        self.naver_copy_btn.pack(side="left", padx=5)
+        self.naver_copy_plain_btn = tb.Button(
+            btn_frame, text="일반 글로 복사", command=self._copy_naver_writer_plain, state="disabled", bootstyle="secondary"
+        )
+        self.naver_copy_plain_btn.pack(side="left", padx=5)
+        self.naver_save_btn = tb.Button(
+            btn_frame, text="저장", command=self._save_naver_writer_post, state="disabled", bootstyle="success"
+        )
+        self.naver_save_btn.pack(side="left")
+        self.naver_sns_btn = tb.Button(
+            btn_frame, text="SNS 홍보 문구 만들기", command=self._send_naver_writer_post_to_sns, state="disabled", bootstyle="info"
+        )
+        self.naver_sns_btn.pack(side="left", padx=5)
+        tb.Button(btn_frame, text="SEO 진단", command=self._run_naver_writer_seo_check, bootstyle="warning").pack(side="left")
+
+        publish_row = ttk.Frame(tab)
+        publish_row.pack(fill="x", padx=10, pady=(0, 5))
+        self.naver_publish_status_var = tk.StringVar(value="상태: 초안")
+        ttk.Label(publish_row, textvariable=self.naver_publish_status_var).pack(side="left")
+        ttk.Label(publish_row, text="게시 URL:").pack(side="left", padx=(15, 3))
+        self.naver_publish_url_var = tk.StringVar()
+        ttk.Entry(publish_row, textvariable=self.naver_publish_url_var, width=40).pack(
+            side="left", fill="x", expand=True, padx=3
+        )
+        tb.Button(
+            publish_row, text="게시완료로 표시", command=self._mark_naver_writer_published, bootstyle="success"
+        ).pack(side="left")
+
+        self.naver_writer_status_var = tk.StringVar(value="대기 중")
+        ttk.Label(tab, textvariable=self.naver_writer_status_var).pack(anchor="w", padx=10)
+        self.naver_writer_progress = ttk.Progressbar(tab, mode="indeterminate")
+        self.naver_writer_progress.pack(fill="x", padx=10, pady=(0, 5))
+
+        ttk.Label(tab, text="생성 결과:").pack(anchor="w", padx=10)
+        self.naver_result_text = self._style_text_widget(scrolledtext.ScrolledText(tab, wrap="word"))
+        self.naver_result_text.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+
+    def _generate_naver_writer_post(self):
+        news_text = self.naver_input_text.get("1.0", tk.END).strip()
+        if not news_text:
+            messagebox.showwarning("알림", "뉴스 원문을 붙여넣으세요.")
+            return
+        if not os.environ.get("GROQ_API_KEY"):
+            messagebox.showerror("오류", "GROQ_API_KEY가 설정되어 있지 않습니다. .env 파일을 확인하세요.")
+            return
+
+        self.naver_writer_status_var.set("블로그 글 생성 중... (AI 호출)")
+        self.naver_writer_progress.start(10)
+        self.naver_generate_btn.config(state="disabled")
+        self.naver_copy_btn.config(state="disabled")
+        self.naver_copy_plain_btn.config(state="disabled")
+        self.naver_save_btn.config(state="disabled")
+        self.naver_sns_btn.config(state="disabled")
+
+        def task():
+            try:
+                from src.generator.custom_naver import generate_naver_post_from_text
+                post = generate_naver_post_from_text(news_text)
+                self.after(0, lambda: self._on_naver_writer_done(post, None))
+            except Exception as e:
+                self.after(0, lambda: self._on_naver_writer_done(None, e))
+
+        threading.Thread(target=task, daemon=True).start()
+
+    def _on_naver_writer_done(self, post, error):
+        self.naver_writer_progress.stop()
+        self.naver_generate_btn.config(state="normal")
+        if error:
+            self.naver_writer_status_var.set(f"생성 실패: {error}")
+            messagebox.showerror("오류", str(error))
+            return
+        self._naver_writer_post = post
+        self.naver_result_text.delete("1.0", tk.END)
+        self.naver_result_text.insert("1.0", post.content)
+        self.naver_writer_status_var.set("생성 완료. 복사하거나 저장하세요.")
+        self.naver_copy_btn.config(state="normal")
+        self.naver_copy_plain_btn.config(state="normal")
+        self.naver_save_btn.config(state="normal")
+        self.naver_sns_btn.config(state="normal")
+
+    def _send_naver_writer_post_to_sns(self):
+        if not self._naver_writer_post:
+            return
+        content = self.naver_result_text.get("1.0", tk.END).strip()
+        self._send_to_sns_tab(self._naver_writer_post.title, content, self.naver_publish_url_var.get().strip())
+
+    def _run_naver_writer_seo_check(self):
+        content = self.naver_result_text.get("1.0", tk.END).strip()
+        if not content:
+            messagebox.showwarning("알림", "먼저 글을 생성하세요.")
+            return
+        self._show_seo_check_dialog(content)
+
+    def _mark_naver_writer_published(self):
+        path = getattr(self, "_naver_writer_last_path", None)
+        if not path:
+            messagebox.showwarning("알림", "먼저 글을 저장하세요.")
+            return
+        url = self.naver_publish_url_var.get().strip()
+        if not url:
+            messagebox.showwarning("알림", "게시된 글의 URL을 입력하세요.")
+            return
+        from src.publish_status import set_published
+        set_published(str(path), url)
+        self.naver_publish_status_var.set("상태: 게시됨")
+        messagebox.showinfo("완료", "게시 상태로 표시했습니다.")
+
+    def _copy_naver_writer_markdown(self):
+        content = self.naver_result_text.get("1.0", tk.END).strip()
+        if not content:
+            return
+        pyperclip.copy(content)
+        messagebox.showinfo("복사 완료", "마크다운 원문이 클립보드에 복사되었습니다.")
+
+    def _copy_naver_writer_plain(self):
+        content = self.naver_result_text.get("1.0", tk.END).strip()
+        if not content:
+            return
+        pyperclip.copy(self._strip_markdown_to_plain(content))
+        messagebox.showinfo("복사 완료", "일반 텍스트로 클립보드에 복사되었습니다.")
+
+    def _save_naver_writer_post(self):
+        if not self._naver_writer_post:
+            return
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        folder = OUTPUT_DIR / "blog_writer" / "naver" / date_str
+        folder.mkdir(parents=True, exist_ok=True)
+
+        slug = self._naver_writer_post.news_item.slug or "post"
+        existing = list(folder.glob(f"{slug}*.md"))
+        filename = f"{slug}_{len(existing) + 1:02d}.md"
+        path = folder / filename
+        path.write_text(self.naver_result_text.get("1.0", tk.END).strip() + "\n", encoding="utf-8")
+        self._naver_writer_last_path = path
+        self.naver_publish_status_var.set("상태: 초안")
+        self.naver_publish_url_var.set("")
+
+        self.naver_writer_status_var.set(f"저장됨: {path}")
+        messagebox.showinfo("저장 완료", str(path))
+
+    def _build_tistory_writer_tab(self):
+        tab = self.tistory_writer_tab
+
+        ttk.Label(tab, text="뉴스 원문 붙여넣기:").pack(anchor="w", padx=10, pady=(10, 0))
+        self.tistory_input_text = self._style_text_widget(scrolledtext.ScrolledText(tab, wrap="word", height=10))
+        self.tistory_input_text.pack(fill="both", expand=False, padx=10, pady=5)
+
+        btn_frame = ttk.Frame(tab)
+        btn_frame.pack(fill="x", padx=10, pady=5)
+        self.tistory_generate_btn = tb.Button(
+            btn_frame, text="글 생성", command=self._generate_tistory_writer_post, bootstyle="primary"
+        )
+        self.tistory_generate_btn.pack(side="left")
+        self.tistory_copy_btn = tb.Button(
+            btn_frame, text="마크다운으로 복사", command=self._copy_tistory_writer_markdown, state="disabled", bootstyle="secondary"
+        )
+        self.tistory_copy_btn.pack(side="left", padx=5)
+        self.tistory_copy_plain_btn = tb.Button(
+            btn_frame, text="일반 글로 복사", command=self._copy_tistory_writer_plain, state="disabled", bootstyle="secondary"
+        )
+        self.tistory_copy_plain_btn.pack(side="left", padx=5)
+        self.tistory_save_btn = tb.Button(
+            btn_frame, text="저장", command=self._save_tistory_writer_post, state="disabled", bootstyle="success"
+        )
+        self.tistory_save_btn.pack(side="left")
+        self.tistory_sns_btn = tb.Button(
+            btn_frame, text="SNS 홍보 문구 만들기", command=self._send_tistory_writer_post_to_sns, state="disabled", bootstyle="info"
+        )
+        self.tistory_sns_btn.pack(side="left", padx=5)
+        tb.Button(btn_frame, text="SEO 진단", command=self._run_tistory_writer_seo_check, bootstyle="warning").pack(side="left")
+
+        publish_row = ttk.Frame(tab)
+        publish_row.pack(fill="x", padx=10, pady=(0, 5))
+        self.tistory_publish_status_var = tk.StringVar(value="상태: 초안")
+        ttk.Label(publish_row, textvariable=self.tistory_publish_status_var).pack(side="left")
+        ttk.Label(publish_row, text="게시 URL:").pack(side="left", padx=(15, 3))
+        self.tistory_publish_url_var = tk.StringVar()
+        ttk.Entry(publish_row, textvariable=self.tistory_publish_url_var, width=40).pack(
+            side="left", fill="x", expand=True, padx=3
+        )
+        tb.Button(
+            publish_row, text="게시완료로 표시", command=self._mark_tistory_writer_published, bootstyle="success"
+        ).pack(side="left")
+
+        self.tistory_writer_status_var = tk.StringVar(value="대기 중")
+        ttk.Label(tab, textvariable=self.tistory_writer_status_var).pack(anchor="w", padx=10)
+        self.tistory_writer_progress = ttk.Progressbar(tab, mode="indeterminate")
+        self.tistory_writer_progress.pack(fill="x", padx=10, pady=(0, 5))
+
+        ttk.Label(tab, text="생성 결과:").pack(anchor="w", padx=10)
+        self.tistory_result_text = self._style_text_widget(scrolledtext.ScrolledText(tab, wrap="word"))
+        self.tistory_result_text.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+
+    def _generate_tistory_writer_post(self):
+        news_text = self.tistory_input_text.get("1.0", tk.END).strip()
+        if not news_text:
+            messagebox.showwarning("알림", "뉴스 원문을 붙여넣으세요.")
+            return
+        if not os.environ.get("GROQ_API_KEY"):
+            messagebox.showerror("오류", "GROQ_API_KEY가 설정되어 있지 않습니다. .env 파일을 확인하세요.")
+            return
+
+        self.tistory_writer_status_var.set("블로그 글 생성 중... (AI 호출, 분량이 길어 시간이 걸릴 수 있음)")
+        self.tistory_writer_progress.start(10)
+        self.tistory_generate_btn.config(state="disabled")
+        self.tistory_copy_btn.config(state="disabled")
+        self.tistory_copy_plain_btn.config(state="disabled")
+        self.tistory_save_btn.config(state="disabled")
+        self.tistory_sns_btn.config(state="disabled")
+
+        def task():
+            try:
+                from src.generator.custom_tistory import generate_tistory_post_from_text
+                post = generate_tistory_post_from_text(news_text)
+                self.after(0, lambda: self._on_tistory_writer_done(post, None))
+            except Exception as e:
+                self.after(0, lambda: self._on_tistory_writer_done(None, e))
+
+        threading.Thread(target=task, daemon=True).start()
+
+    def _on_tistory_writer_done(self, post, error):
+        self.tistory_writer_progress.stop()
+        self.tistory_generate_btn.config(state="normal")
+        if error:
+            self.tistory_writer_status_var.set(f"생성 실패: {error}")
+            messagebox.showerror("오류", str(error))
+            return
+        self._tistory_writer_post = post
+        self.tistory_result_text.delete("1.0", tk.END)
+        self.tistory_result_text.insert("1.0", post.content)
+        self.tistory_writer_status_var.set("생성 완료. 복사하거나 저장하세요.")
+        self.tistory_copy_btn.config(state="normal")
+        self.tistory_copy_plain_btn.config(state="normal")
+        self.tistory_save_btn.config(state="normal")
+        self.tistory_sns_btn.config(state="normal")
+
+    def _send_tistory_writer_post_to_sns(self):
+        if not self._tistory_writer_post:
+            return
+        content = self.tistory_result_text.get("1.0", tk.END).strip()
+        self._send_to_sns_tab(self._tistory_writer_post.title, content, self.tistory_publish_url_var.get().strip())
+
+    def _run_tistory_writer_seo_check(self):
+        content = self.tistory_result_text.get("1.0", tk.END).strip()
+        if not content:
+            messagebox.showwarning("알림", "먼저 글을 생성하세요.")
+            return
+        self._show_seo_check_dialog(content)
+
+    def _mark_tistory_writer_published(self):
+        path = getattr(self, "_tistory_writer_last_path", None)
+        if not path:
+            messagebox.showwarning("알림", "먼저 글을 저장하세요.")
+            return
+        url = self.tistory_publish_url_var.get().strip()
+        if not url:
+            messagebox.showwarning("알림", "게시된 글의 URL을 입력하세요.")
+            return
+        from src.publish_status import set_published
+        set_published(str(path), url)
+        self.tistory_publish_status_var.set("상태: 게시됨")
+        messagebox.showinfo("완료", "게시 상태로 표시했습니다.")
+
+    def _copy_tistory_writer_markdown(self):
+        content = self.tistory_result_text.get("1.0", tk.END).strip()
+        if not content:
+            return
+        pyperclip.copy(content)
+        messagebox.showinfo("복사 완료", "원문이 클립보드에 복사되었습니다.")
+
+    def _copy_tistory_writer_plain(self):
+        content = self.tistory_result_text.get("1.0", tk.END).strip()
+        if not content:
+            return
+        pyperclip.copy(self._strip_markdown_to_plain(content))
+        messagebox.showinfo("복사 완료", "일반 텍스트로 클립보드에 복사되었습니다.")
+
+    def _save_tistory_writer_post(self):
+        if not self._tistory_writer_post:
+            return
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        folder = OUTPUT_DIR / "blog_writer" / "tistory" / date_str
+        folder.mkdir(parents=True, exist_ok=True)
+
+        slug = self._tistory_writer_post.news_item.slug or "post"
+        existing = list(folder.glob(f"{slug}*.md"))
+        filename = f"{slug}_{len(existing) + 1:02d}.md"
+        path = folder / filename
+        path.write_text(self.tistory_result_text.get("1.0", tk.END).strip() + "\n", encoding="utf-8")
+        self._tistory_writer_last_path = path
+        self.tistory_publish_status_var.set("상태: 초안")
+        self.tistory_publish_url_var.set("")
+
+        self.tistory_writer_status_var.set(f"저장됨: {path}")
+        messagebox.showinfo("저장 완료", str(path))
+
+    # ---------------- SNS 홍보 연동 helper ----------------
+    def _extract_summary_from_content(self, content: str, max_chars: int = 200) -> str:
+        for line in content.split("\n"):
+            line = line.strip()
+            if not line or line.startswith("#") or line.startswith(">") or line.startswith("!["):
+                continue
+            if re.match(r"^\d+[.)]\s", line) or line.startswith("-") or line.startswith("*"):
+                continue
+            line = re.sub(r"\*\*(.+?)\*\*", r"\1", line)
+            if len(line) < 40:
+                continue
+            return line[:max_chars]
+        return ""
+
+    def _send_to_sns_tab(self, title: str, content: str, url: str = ""):
+        self.sns_title_var.set(title)
+        self.sns_summary_text.delete("1.0", tk.END)
+        self.sns_summary_text.insert("1.0", self._extract_summary_from_content(content))
+        self.sns_url_var.set(url)
+        self.notebook.select(self.sns_promo_tab)
+        if url:
+            self.sns_status_var.set("제목·요약·URL이 자동으로 채워졌습니다. '홍보 문구 생성'을 누르세요.")
+        else:
+            self.sns_status_var.set("제목·요약이 자동으로 채워졌습니다. 게시 후 URL을 입력하고 '홍보 문구 생성'을 누르세요.")
+
+    # ---------------- SNS 홍보 ----------------
+    def _build_sns_promo_tab(self):
+        tab = self.sns_promo_tab
+
+        form = ttk.Frame(tab)
+        form.pack(fill="x", padx=10, pady=10)
+        form.columnconfigure(1, weight=1)
+
+        ttk.Label(form, text="글 제목:").grid(row=0, column=0, sticky="w", padx=5, pady=3)
+        self.sns_title_var = tk.StringVar()
+        ttk.Entry(form, textvariable=self.sns_title_var).grid(row=0, column=1, sticky="ew", padx=5, pady=3)
+
+        ttk.Label(form, text="게시된 글 URL:").grid(row=1, column=0, sticky="w", padx=5, pady=3)
+        self.sns_url_var = tk.StringVar()
+        ttk.Entry(form, textvariable=self.sns_url_var).grid(row=1, column=1, sticky="ew", padx=5, pady=3)
+
+        ttk.Label(form, text="핵심 내용 요약 (선택):").grid(row=2, column=0, sticky="nw", padx=5, pady=3)
+        self.sns_summary_text = self._style_text_widget(tk.Text(form, height=3))
+        self.sns_summary_text.grid(row=2, column=1, sticky="ew", padx=5, pady=3)
+
+        btn_frame = ttk.Frame(tab)
+        btn_frame.pack(fill="x", padx=10, pady=5)
+        self.sns_generate_btn = tb.Button(
+            btn_frame, text="홍보 문구 생성", command=self._generate_sns_captions, bootstyle="primary"
+        )
+        self.sns_generate_btn.pack(side="left")
+
+        self.sns_status_var = tk.StringVar(value="대기 중")
+        ttk.Label(tab, textvariable=self.sns_status_var).pack(anchor="w", padx=10)
+        self.sns_progress = ttk.Progressbar(tab, mode="indeterminate")
+        self.sns_progress.pack(fill="x", padx=10, pady=(0, 5))
+
+        threads_box = ttk.LabelFrame(tab, text="쓰레드(Threads)용")
+        threads_box.pack(fill="both", expand=True, padx=10, pady=5)
+        self.sns_threads_text = self._style_text_widget(tk.Text(threads_box, wrap="word", height=6))
+        self.sns_threads_text.pack(fill="both", expand=True, side="left", padx=5, pady=5)
+        tb.Button(threads_box, text="복사", command=lambda: self._copy_sns_text(self.sns_threads_text)).pack(
+            side="right", padx=5, pady=5, anchor="n"
+        )
+
+        instagram_box = ttk.LabelFrame(tab, text="인스타그램용")
+        instagram_box.pack(fill="both", expand=True, padx=10, pady=5)
+        self.sns_instagram_text = self._style_text_widget(tk.Text(instagram_box, wrap="word", height=6))
+        self.sns_instagram_text.pack(fill="both", expand=True, side="left", padx=5, pady=5)
+        tb.Button(instagram_box, text="복사", command=lambda: self._copy_sns_text(self.sns_instagram_text)).pack(
+            side="right", padx=5, pady=5, anchor="n"
+        )
+
+    def _generate_sns_captions(self):
+        title = self.sns_title_var.get().strip()
+        url = self.sns_url_var.get().strip()
+        summary = self.sns_summary_text.get("1.0", tk.END).strip()
+
+        if not title or not url:
+            messagebox.showwarning("알림", "글 제목과 URL을 입력하세요.")
+            return
+        if not os.environ.get("GROQ_API_KEY"):
+            messagebox.showerror("오류", "GROQ_API_KEY가 설정되어 있지 않습니다. .env 파일을 확인하세요.")
+            return
+
+        self.sns_status_var.set("홍보 문구 생성 중... (AI 호출)")
+        self.sns_progress.start(10)
+        self.sns_generate_btn.config(state="disabled")
+
+        def task():
+            try:
+                from src.generator.sns_promo import generate_sns_captions
+                captions = generate_sns_captions(title, url, summary)
+                self.after(0, lambda: self._on_sns_captions_done(captions, None))
+            except Exception as e:
+                self.after(0, lambda: self._on_sns_captions_done(None, e))
+
+        threading.Thread(target=task, daemon=True).start()
+
+    def _on_sns_captions_done(self, captions, error):
+        self.sns_progress.stop()
+        self.sns_generate_btn.config(state="normal")
+        if error:
+            self.sns_status_var.set(f"생성 실패: {error}")
+            messagebox.showerror("오류", str(error))
+            return
+
+        self.sns_threads_text.delete("1.0", tk.END)
+        self.sns_threads_text.insert("1.0", captions.get("threads", ""))
+        self.sns_instagram_text.delete("1.0", tk.END)
+        self.sns_instagram_text.insert("1.0", captions.get("instagram", ""))
+        self.sns_status_var.set("생성 완료. 각 박스의 '복사' 버튼으로 복사하세요.")
+
+    def _copy_sns_text(self, text_widget):
+        content = text_widget.get("1.0", tk.END).strip()
+        if not content:
+            return
+        pyperclip.copy(content)
+        messagebox.showinfo("복사 완료", "클립보드에 복사되었습니다.")
 
     # ---------------- 파이프라인 실행 ----------------
     def _build_pipeline_tab(self):
@@ -515,7 +1107,7 @@ class AutoBlogGUI(tk.Tk):
         ttk.Checkbutton(top, text="네이버 SEO", variable=self.naver_seo_var).grid(row=0, column=2, sticky="w", padx=(20, 5))
         ttk.Checkbutton(top, text="구글 SEO", variable=self.google_seo_var).grid(row=0, column=3, sticky="w")
 
-        self.run_pipeline_btn = ttk.Button(top, text="파이프라인 실행", command=self._run_pipeline)
+        self.run_pipeline_btn = tb.Button(top, text="파이프라인 실행", command=self._run_pipeline, bootstyle="primary")
         self.run_pipeline_btn.grid(row=0, column=4, sticky="w", padx=(20, 0))
 
         self.pipeline_status_var = tk.StringVar(value="대기 중")
@@ -523,7 +1115,7 @@ class AutoBlogGUI(tk.Tk):
         self.pipeline_progress = ttk.Progressbar(self.pipeline_tab, mode="indeterminate")
         self.pipeline_progress.pack(fill="x", padx=10, pady=(0, 5))
 
-        self.pipeline_log = scrolledtext.ScrolledText(self.pipeline_tab, wrap="word")
+        self.pipeline_log = self._style_text_widget(scrolledtext.ScrolledText(self.pipeline_tab, wrap="word"))
         self.pipeline_log.pack(fill="both", expand=True, padx=10, pady=5)
 
     def _pipeline_log_line(self, message):
