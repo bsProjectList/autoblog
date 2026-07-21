@@ -180,7 +180,8 @@ def generate_tistory_post_from_text(news_text: str) -> BlogPost:
             {"role": "user", "content": _prompt(news_text)},
         ],
         temperature=0.85,
-        max_tokens=14000,
+        # Groq on-demand TPM limit is 12,000; keep request headroom for the prompt.
+        max_tokens=8500,
     )
     for chunk in stream:
         delta = chunk.choices[0].delta.content

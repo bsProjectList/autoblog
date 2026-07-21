@@ -3,7 +3,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict
 
-USAGE_FILE = Path("output") / ".usage_stats.json"
+# Keep usage history tied to the project, not to the process's current
+# working directory (which can differ when launched from a shortcut).
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+USAGE_FILE = PROJECT_ROOT / "output" / ".usage_stats.json"
 
 
 def _load() -> Dict:

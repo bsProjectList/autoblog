@@ -12,7 +12,9 @@ from PIL import Image, ImageTk
 import pyperclip
 import ttkbootstrap as tb
 
-load_dotenv()
+# The project .env should take precedence over a stale placeholder inherited
+# from the PowerShell/system environment.
+load_dotenv(override=True)
 
 OUTPUT_DIR = Path("output")
 AFFILIATE_DIR = OUTPUT_DIR / "affiliate"
@@ -413,7 +415,7 @@ class AutoBlogGUI(tb.Window):
                 products = search_products(keyword, limit=5)
                 self.after(0, lambda: self._on_coupang_search_done(products, None))
             except Exception as e:
-                self.after(0, lambda: self._on_coupang_search_done(None, e))
+                self.after(0, lambda error=e: self._on_coupang_search_done(None, error))
 
         threading.Thread(target=task, daemon=True).start()
 
@@ -614,7 +616,7 @@ class AutoBlogGUI(tb.Window):
                 post = generate_affiliate_post(url, product, image_count=image_count)
                 self.after(0, lambda: self._on_generate_done(post, None))
             except Exception as e:
-                self.after(0, lambda: self._on_generate_done(None, e))
+                self.after(0, lambda error=e: self._on_generate_done(None, error))
 
         threading.Thread(target=task, daemon=True).start()
 
@@ -783,7 +785,7 @@ class AutoBlogGUI(tb.Window):
                 post = generate_naver_post_from_text(news_text)
                 self.after(0, lambda: self._on_naver_writer_done(post, None))
             except Exception as e:
-                self.after(0, lambda: self._on_naver_writer_done(None, e))
+                self.after(0, lambda error=e: self._on_naver_writer_done(None, error))
 
         threading.Thread(target=task, daemon=True).start()
 
@@ -829,7 +831,7 @@ class AutoBlogGUI(tb.Window):
                 data = generate_image(prompt, size="1024x1024")
                 self.after(0, lambda: self._on_naver_thumbnail_done(data, None))
             except Exception as e:
-                self.after(0, lambda: self._on_naver_thumbnail_done(None, e))
+                self.after(0, lambda error=e: self._on_naver_thumbnail_done(None, error))
 
         threading.Thread(target=task, daemon=True).start()
 
@@ -1027,7 +1029,7 @@ class AutoBlogGUI(tb.Window):
                 post = generate_tistory_post_from_text(news_text)
                 self.after(0, lambda: self._on_tistory_writer_done(post, None))
             except Exception as e:
-                self.after(0, lambda: self._on_tistory_writer_done(None, e))
+                self.after(0, lambda error=e: self._on_tistory_writer_done(None, error))
 
         threading.Thread(target=task, daemon=True).start()
 
@@ -1289,7 +1291,7 @@ class AutoBlogGUI(tb.Window):
                 captions = generate_sns_captions(title, url, summary)
                 self.after(0, lambda: self._on_sns_captions_done(captions, None))
             except Exception as e:
-                self.after(0, lambda: self._on_sns_captions_done(None, e))
+                self.after(0, lambda error=e: self._on_sns_captions_done(None, error))
 
         threading.Thread(target=task, daemon=True).start()
 
