@@ -622,7 +622,7 @@ class AutoBlogGUI(tb.Window):
 
             def replace_placeholder(match):
                 idx = int(match.group(1))
-                if 1 <= idx <= len(image_filenames):
+                if 1 <= idx <= len(image_filenames) and idx not in used_indices:
                     used_indices.add(idx)
                     return f"![{product_name} {idx}]({image_filenames[idx - 1]})"
                 return ""
