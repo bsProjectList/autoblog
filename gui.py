@@ -24,6 +24,16 @@ class AutoBlogGUI(tb.Window):
         self.geometry("1080x760")
         self.colors = self.style.colors
 
+        self.usage_bar = ttk.Frame(self)
+        self.usage_bar.pack(side="bottom", fill="x", padx=8, pady=(0, 8))
+        self.usage_label_var = tk.StringVar(value="사용량 불러오는 중...")
+        ttk.Label(self.usage_bar, textvariable=self.usage_label_var).pack(side="left")
+        self.groq_usage_progress = ttk.Progressbar(self.usage_bar, mode="determinate", maximum=100000, length=180)
+        self.groq_usage_progress.pack(side="left", padx=10)
+        tb.Button(self.usage_bar, text="새로고침", command=self._refresh_usage_bar, bootstyle="secondary").pack(
+            side="right"
+        )
+
         notebook = ttk.Notebook(self)
         notebook.pack(fill="both", expand=True, padx=8, pady=8)
         self.notebook = notebook
@@ -50,12 +60,38 @@ class AutoBlogGUI(tb.Window):
         self._tistory_writer_post = None
         self._naver_writer_last_path = None
         self._tistory_writer_last_path = None
+        self._naver_thumbnail_image = None
+        self._naver_thumbnail_photo = None
+        self._tistory_images = []
+        self._tistory_photos = []
 
         self._build_viewer_tab()
         self._build_affiliate_tab()
         self._build_blog_writer_tab()
         self._build_sns_promo_tab()
         self._build_pipeline_tab()
+        self._refresh_usage_bar()
+
+    def _refresh_usage_bar(self):
+        from src.usage_tracker import get_today_usage
+        usage = get_today_usage()
+        groq = usage.get("groq", {})
+        openai_u = usage.get("openai", {})
+        image_cost = usage.get("image_cost_usd", 0.0)
+
+        groq_tokens = groq.get("tokens", 0)
+        groq_est = "(일부 추정)" if groq.get("has_estimate") else ""
+        openai_tokens = openai_u.get("tokens", 0)
+        openai_est = "(일부 추정)" if openai_u.get("has_estimate") else ""
+        openai_cost = openai_tokens / 1_000_000 * 0.375
+        total_cost = openai_cost + image_cost
+
+        self.groq_usage_progress["value"] = min(groq_tokens, 100000)
+        self.usage_label_var.set(
+            f"오늘 사용량 — Groq {groq_tokens:,}/100,000 토큰{groq_est}  |  "
+            f"OpenAI {openai_tokens:,} 토큰{openai_est} (약 ${openai_cost:.3f})  |  "
+            f"이미지 ${image_cost:.2f}  |  총 예상 비용 약 ${total_cost:.3f}"
+        )
 
     # ---------------- 테마 헬퍼 ----------------
     def _style_text_widget(self, widget):
@@ -594,6 +630,7 @@ class AutoBlogGUI(tb.Window):
         self.result_text.insert("1.0", post.content)
         self.status_var.set("생성 완료. '저장'을 눌러 파일로 저장하세요.")
         self.save_btn.config(state="normal")
+        self._refresh_usage_bar()
 
     def _save_post(self):
         if not self._current_post:
@@ -689,6 +726,14 @@ class AutoBlogGUI(tb.Window):
         )
         self.naver_sns_btn.pack(side="left", padx=5)
         tb.Button(btn_frame, text="SEO 진단", command=self._run_naver_writer_seo_check, bootstyle="warning").pack(side="left")
+        self.naver_image_btn = tb.Button(
+            btn_frame, text="썸네일 이미지 생성 (유료 API)", command=self._generate_naver_thumbnail,
+            state="disabled", bootstyle="info-outline",
+        )
+        self.naver_image_btn.pack(side="left", padx=5)
+
+        self.naver_thumbnail_preview = ttk.Label(tab, text="")
+        self.naver_thumbnail_preview.pack(anchor="w", padx=10, pady=(0, 5))
 
         publish_row = ttk.Frame(tab)
         publish_row.pack(fill="x", padx=10, pady=(0, 5))
@@ -728,6 +773,9 @@ class AutoBlogGUI(tb.Window):
         self.naver_copy_plain_btn.config(state="disabled")
         self.naver_save_btn.config(state="disabled")
         self.naver_sns_btn.config(state="disabled")
+        self.naver_image_btn.config(state="disabled")
+        self._naver_thumbnail_image = None
+        self.naver_thumbnail_preview.config(image="", text="")
 
         def task():
             try:
@@ -754,6 +802,57 @@ class AutoBlogGUI(tb.Window):
         self.naver_copy_plain_btn.config(state="normal")
         self.naver_save_btn.config(state="normal")
         self.naver_sns_btn.config(state="normal")
+        self.naver_image_btn.config(state="normal")
+        self._refresh_usage_bar()
+
+    def _generate_naver_thumbnail(self):
+        if not self._naver_writer_post:
+            return
+        if not os.environ.get("OPENAI_API_KEY"):
+            messagebox.showerror("오류", "OPENAI_API_KEY가 설정되어 있지 않습니다. .env 파일을 확인하세요.")
+            return
+
+        from src.generator.custom_naver import extract_thumbnail_prompt
+        content = self.naver_result_text.get("1.0", tk.END).strip()
+        prompt = extract_thumbnail_prompt(content)
+        if not prompt:
+            messagebox.showwarning("알림", "본문에서 썸네일 프롬프트를 찾을 수 없습니다.")
+            return
+
+        self.naver_writer_status_var.set("썸네일 이미지 생성 중... (이미지 생성 API 호출)")
+        self.naver_writer_progress.start(10)
+        self.naver_image_btn.config(state="disabled")
+
+        def task():
+            try:
+                from src.generator.image_gen import generate_image
+                data = generate_image(prompt, size="1024x1024")
+                self.after(0, lambda: self._on_naver_thumbnail_done(data, None))
+            except Exception as e:
+                self.after(0, lambda: self._on_naver_thumbnail_done(None, e))
+
+        threading.Thread(target=task, daemon=True).start()
+
+    def _on_naver_thumbnail_done(self, data, error):
+        self.naver_writer_progress.stop()
+        self.naver_image_btn.config(state="normal")
+        if error:
+            self.naver_writer_status_var.set(f"이미지 생성 실패: {error}")
+            messagebox.showerror("오류", str(error))
+            return
+
+        self._naver_thumbnail_image = (data, ".png")
+        try:
+            pil_image = Image.open(io.BytesIO(data))
+            pil_image.thumbnail((200, 200))
+            photo = ImageTk.PhotoImage(pil_image)
+            self._naver_thumbnail_photo = photo
+            self.naver_thumbnail_preview.config(image=photo, text="")
+        except Exception:
+            pass
+
+        self.naver_writer_status_var.set("썸네일 생성 완료. '저장'을 누르면 글에 포함됩니다.")
+        self._refresh_usage_bar()
 
     def _send_naver_writer_post_to_sns(self):
         if not self._naver_writer_post:
@@ -800,14 +899,39 @@ class AutoBlogGUI(tb.Window):
         if not self._naver_writer_post:
             return
         date_str = datetime.now().strftime("%Y-%m-%d")
-        folder = OUTPUT_DIR / "blog_writer" / "naver" / date_str
-        folder.mkdir(parents=True, exist_ok=True)
+        date_folder = OUTPUT_DIR / "blog_writer" / "naver" / date_str
+        date_folder.mkdir(parents=True, exist_ok=True)
 
         slug = self._naver_writer_post.news_item.slug or "post"
-        existing = list(folder.glob(f"{slug}*.md"))
-        filename = f"{slug}_{len(existing) + 1:02d}.md"
-        path = folder / filename
-        path.write_text(self.naver_result_text.get("1.0", tk.END).strip() + "\n", encoding="utf-8")
+        existing = [d for d in date_folder.glob(f"{slug}_*") if d.is_dir()]
+        suffix = f"{len(existing) + 1:02d}"
+        post_folder = date_folder / f"{slug}_{suffix}"
+        post_folder.mkdir(parents=True, exist_ok=True)
+
+        content = self.naver_result_text.get("1.0", tk.END).strip() + "\n"
+
+        if self._naver_thumbnail_image:
+            data, ext = self._naver_thumbnail_image
+            image_filename = f"thumbnail{ext}"
+            (post_folder / image_filename).write_bytes(data)
+
+            content = re.sub(
+                r"(^#{1,6}\s*.*썸네일.*\n+)?^3D digital thumbnail.+\n?",
+                "",
+                content,
+                count=1,
+                flags=re.MULTILINE,
+            )
+            content = content.rstrip() + "\n"
+            lines = content.split("\n", 1)
+            if lines[0].startswith("#"):
+                rest = lines[1].lstrip("\n") if len(lines) > 1 else ""
+                content = lines[0] + "\n\n" + f"![썸네일]({image_filename})" + "\n\n" + rest
+            else:
+                content = f"![썸네일]({image_filename})" + "\n\n" + content
+
+        path = post_folder / "post.md"
+        path.write_text(content, encoding="utf-8")
         self._naver_writer_last_path = path
         self.naver_publish_status_var.set("상태: 초안")
         self.naver_publish_url_var.set("")
@@ -845,6 +969,14 @@ class AutoBlogGUI(tb.Window):
         )
         self.tistory_sns_btn.pack(side="left", padx=5)
         tb.Button(btn_frame, text="SEO 진단", command=self._run_tistory_writer_seo_check, bootstyle="warning").pack(side="left")
+        self.tistory_image_btn = tb.Button(
+            btn_frame, text="이미지 3장 생성 (유료 API)", command=self._generate_tistory_images,
+            state="disabled", bootstyle="info-outline",
+        )
+        self.tistory_image_btn.pack(side="left", padx=5)
+
+        self.tistory_image_preview_frame = ttk.Frame(tab)
+        self.tistory_image_preview_frame.pack(fill="x", padx=10, pady=(0, 5))
 
         publish_row = ttk.Frame(tab)
         publish_row.pack(fill="x", padx=10, pady=(0, 5))
@@ -884,6 +1016,10 @@ class AutoBlogGUI(tb.Window):
         self.tistory_copy_plain_btn.config(state="disabled")
         self.tistory_save_btn.config(state="disabled")
         self.tistory_sns_btn.config(state="disabled")
+        self.tistory_image_btn.config(state="disabled")
+        self._tistory_images = []
+        for widget in self.tistory_image_preview_frame.winfo_children():
+            widget.destroy()
 
         def task():
             try:
@@ -910,6 +1046,67 @@ class AutoBlogGUI(tb.Window):
         self.tistory_copy_plain_btn.config(state="normal")
         self.tistory_save_btn.config(state="normal")
         self.tistory_sns_btn.config(state="normal")
+        self.tistory_image_btn.config(state="normal")
+        self._refresh_usage_bar()
+
+    def _generate_tistory_images(self):
+        if not self._tistory_writer_post:
+            return
+        if not os.environ.get("OPENAI_API_KEY"):
+            messagebox.showerror("오류", "OPENAI_API_KEY가 설정되어 있지 않습니다. .env 파일을 확인하세요.")
+            return
+
+        from src.generator.custom_tistory import extract_image_prompts
+        content = self.tistory_result_text.get("1.0", tk.END).strip()
+        prompts = extract_image_prompts(content)
+        if not prompts:
+            messagebox.showwarning("알림", "본문에서 이미지 생성 프롬프트를 찾을 수 없습니다.")
+            return
+
+        self.tistory_writer_status_var.set(f"이미지 {len(prompts)}장 생성 중... (이미지 생성 API 호출, 시간이 걸릴 수 있음)")
+        self.tistory_writer_progress.start(10)
+        self.tistory_image_btn.config(state="disabled")
+
+        def task():
+            from src.generator.image_gen import generate_image
+            results = []
+            for item in prompts:
+                try:
+                    data = generate_image(item["prompt"], size="1536x1024")
+                    results.append({"data": data, "alt": item["alt"], "error": None})
+                except Exception as e:
+                    results.append({"data": None, "alt": item["alt"], "error": str(e)})
+            self.after(0, lambda: self._on_tistory_images_done(results))
+
+        threading.Thread(target=task, daemon=True).start()
+
+    def _on_tistory_images_done(self, results):
+        self.tistory_writer_progress.stop()
+        self.tistory_image_btn.config(state="normal")
+
+        self._tistory_images = [r for r in results if r["data"]]
+        failed = [r for r in results if r["error"]]
+
+        for widget in self.tistory_image_preview_frame.winfo_children():
+            widget.destroy()
+        self._tistory_photos = []
+        for item in self._tistory_images:
+            try:
+                pil_image = Image.open(io.BytesIO(item["data"]))
+                pil_image.thumbnail((160, 160))
+                photo = ImageTk.PhotoImage(pil_image)
+                self._tistory_photos.append(photo)
+                ttk.Label(self.tistory_image_preview_frame, image=photo).pack(side="left", padx=3)
+            except Exception:
+                continue
+
+        if failed:
+            self.tistory_writer_status_var.set(
+                f"이미지 {len(self._tistory_images)}장 생성 완료, {len(failed)}장 실패: {failed[0]['error']}"
+            )
+        else:
+            self.tistory_writer_status_var.set(f"이미지 {len(self._tistory_images)}장 생성 완료. '저장'을 누르면 글에 포함됩니다.")
+        self._refresh_usage_bar()
 
     def _send_tistory_writer_post_to_sns(self):
         if not self._tistory_writer_post:
@@ -956,14 +1153,40 @@ class AutoBlogGUI(tb.Window):
         if not self._tistory_writer_post:
             return
         date_str = datetime.now().strftime("%Y-%m-%d")
-        folder = OUTPUT_DIR / "blog_writer" / "tistory" / date_str
-        folder.mkdir(parents=True, exist_ok=True)
+        date_folder = OUTPUT_DIR / "blog_writer" / "tistory" / date_str
+        date_folder.mkdir(parents=True, exist_ok=True)
 
         slug = self._tistory_writer_post.news_item.slug or "post"
-        existing = list(folder.glob(f"{slug}*.md"))
-        filename = f"{slug}_{len(existing) + 1:02d}.md"
-        path = folder / filename
-        path.write_text(self.tistory_result_text.get("1.0", tk.END).strip() + "\n", encoding="utf-8")
+        existing = [d for d in date_folder.glob(f"{slug}_*") if d.is_dir()]
+        suffix = f"{len(existing) + 1:02d}"
+        post_folder = date_folder / f"{slug}_{suffix}"
+        post_folder.mkdir(parents=True, exist_ok=True)
+
+        content = self.tistory_result_text.get("1.0", tk.END).strip() + "\n"
+
+        if self._tistory_images:
+            content = re.sub(r"\n##\s*이미지 생성 프롬프트.*\Z", "\n", content, flags=re.DOTALL)
+
+            image_lines = []
+            for idx, item in enumerate(self._tistory_images, start=1):
+                image_filename = f"image_{idx:02d}.png"
+                (post_folder / image_filename).write_bytes(item["data"])
+                image_lines.append((item["alt"], image_filename))
+
+            heading_positions = [
+                m.start() for m in re.finditer(r"^##\s+(?!✍️).+$", content, re.MULTILINE)
+            ]
+            for idx, (alt, image_filename) in enumerate(image_lines):
+                if idx >= len(heading_positions):
+                    break
+                pos = heading_positions[idx]
+                line_end = content.index("\n", pos) + 1
+                image_md = f"\n![{alt}]({image_filename})\n\n"
+                content = content[:line_end] + image_md + content[line_end:]
+                heading_positions = [p + len(image_md) if p > pos else p for p in heading_positions]
+
+        path = post_folder / "post.md"
+        path.write_text(content, encoding="utf-8")
         self._tistory_writer_last_path = path
         self.tistory_publish_status_var.set("상태: 초안")
         self.tistory_publish_url_var.set("")
@@ -1083,6 +1306,7 @@ class AutoBlogGUI(tb.Window):
         self.sns_instagram_text.delete("1.0", tk.END)
         self.sns_instagram_text.insert("1.0", captions.get("instagram", ""))
         self.sns_status_var.set("생성 완료. 각 박스의 '복사' 버튼으로 복사하세요.")
+        self._refresh_usage_bar()
 
     def _copy_sns_text(self, text_widget):
         content = text_widget.get("1.0", tk.END).strip()
@@ -1163,6 +1387,7 @@ class AutoBlogGUI(tb.Window):
         self.run_pipeline_btn.config(state="normal")
         self.pipeline_status_var.set("완료")
         self._refresh_dates()
+        self._refresh_usage_bar()
 
 
 if __name__ == "__main__":

@@ -72,6 +72,11 @@ def _prompt(news_text: str) -> str:
 3D digital thumbnail, bold Korean headline space at top, minimalistic composition, soft light, ultra-high quality, news infographic style, (주제 키워드), 4K style"""
 
 
+def extract_thumbnail_prompt(content: str) -> str:
+    match = re.search(r"^(3D digital thumbnail.+)$", content, re.MULTILINE)
+    return match.group(1).strip() if match else ""
+
+
 def _parse_post(news_text: str, content: str) -> BlogPost:
     title_match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
     title = title_match.group(1).strip() if title_match else "네이버 블로그 포스트"

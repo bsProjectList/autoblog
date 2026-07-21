@@ -127,6 +127,22 @@ ALT: (한글 설명)
 ALT: (한글 설명)"""
 
 
+def extract_image_prompts(content: str):
+    section_match = re.search(r"##\s*이미지 생성 프롬프트(.+)\Z", content, re.DOTALL)
+    if not section_match:
+        return []
+    section = section_match.group(1)
+    items = re.findall(r"\d+\.\s*(.+?)\nALT:\s*(.+?)(?=\n\s*\n|\Z)", section, re.DOTALL)
+
+    def clean(text: str) -> str:
+        text = text.strip()
+        if text.startswith("(") and text.endswith(")"):
+            text = text[1:-1].strip()
+        return text
+
+    return [{"prompt": clean(p), "alt": clean(a)} for p, a in items]
+
+
 def _parse_post(news_text: str, content: str) -> BlogPost:
     title_match = re.search(r"^제목\s*[:：]\s*(.+)$", content, re.MULTILINE)
     title = title_match.group(1).strip() if title_match else "티스토리 블로그 포스트"

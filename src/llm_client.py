@@ -1,5 +1,6 @@
 import os
 from groq import Groq, RateLimitError as GroqRateLimitError
+from src.usage_tracker import record_usage
 
 try:
     from openai import OpenAI, RateLimitError as OpenAIRateLimitError
@@ -12,6 +13,10 @@ OPENAI_MODEL = "gpt-4o-mini"
 
 _groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 _openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY")) if (OpenAI and os.environ.get("OPENAI_API_KEY")) else None
+
+
+def get_openai_client():
+    return _openai_client
 
 
 def _fallback_to_openai(e: Exception):
@@ -28,17 +33,41 @@ def chat_completion(messages, temperature=0.7, max_tokens=4000, response_format=
         kwargs["response_format"] = response_format
 
     try:
-        return _groq_client.chat.completions.create(model=GROQ_MODEL, **kwargs)
+        response = _groq_client.chat.completions.create(model=GROQ_MODEL, **kwargs)
+        provider = "groq"
     except GroqRateLimitError as e:
         _fallback_to_openai(e)
-        return _openai_client.chat.completions.create(model=OPENAI_MODEL, **kwargs)
+        response = _openai_client.chat.completions.create(model=OPENAI_MODEL, **kwargs)
+        provider = "openai"
+
+    if getattr(response, "usage", None):
+        record_usage(provider, response.usage.total_tokens)
+
+    return response
 
 
 def stream_completion(messages, temperature=0.7, max_tokens=8000):
     kwargs = {"messages": messages, "temperature": temperature, "max_tokens": max_tokens, "stream": True}
 
     try:
-        return _groq_client.chat.completions.create(model=GROQ_MODEL, **kwargs)
+        stream = _groq_client.chat.completions.create(model=GROQ_MODEL, **kwargs)
+        provider = "groq"
     except GroqRateLimitError as e:
         _fallback_to_openai(e)
-        return _openai_client.chat.completions.create(model=OPENAI_MODEL, **kwargs)
+        stream = _openai_client.chat.completions.create(model=OPENAI_MODEL, **kwargs)
+        provider = "openai"
+
+    return _tracked_stream(stream, provider, messages)
+
+
+def _tracked_stream(stream, provider, messages):
+    accumulated_chars = 0
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content if chunk.choices else None
+        if delta:
+            accumulated_chars += len(delta)
+        yield chunk
+
+    prompt_chars = sum(len(m.get("content", "")) for m in messages)
+    estimated_tokens = (prompt_chars + accumulated_chars) // 2
+    record_usage(provider, estimated_tokens, estimated=True)
