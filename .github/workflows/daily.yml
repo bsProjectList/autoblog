@@ -69,4 +69,11 @@ jobs:
             exit 0
           fi
           export COUNT=$(find output -type f -name '*.md' | wc -l | tr -d ' ')
-          python -c 'import json, os; status=os.environ["JOB_STATUS"]; icon="✅" if status == "success" else "❌"; payload={"content": icon+" AutoBlog Actions: "+status+"\n생성된 Markdown 파일: "+os.environ["COUNT"]+"개"}; print(json.dumps(payload, ensure_ascii=False))' | curl -fsS -X POST -H "Content-Type: application/json" --data-binary @- "$DISCORD_WEBHOOK_URL" || echo "Discord notification failed; keeping job result unchanged."
+          python -c 'import json, os; status=os.environ["JOB_STATUS"]; icon="✅" if status == "success" else "❌"; payload={"content": icon+" AutoBlog Actions: "+status+"\n생성된 Markdown 파일: "+os.environ["COUNT"]+"개"}; print(json.dumps(payload, ensure_ascii=False))' > /tmp/discord_payload.json
+          HTTP_CODE=$(curl -sS -o /tmp/discord_response.txt -w "%{http_code}" -X POST -H "Content-Type: application/json" --data-binary @/tmp/discord_payload.json "$DISCORD_WEBHOOK_URL")
+          echo "Discord webhook HTTP status: $HTTP_CODE"
+          if [[ "$HTTP_CODE" != 2* ]]; then
+            echo "Discord response:"
+            cat /tmp/discord_response.txt
+            echo "Discord notification failed; keeping job result unchanged."
+          fi
