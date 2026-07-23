@@ -40,6 +40,10 @@ def get_today_usage() -> Dict:
     return _load().get(date_str, {})
 
 
+def get_today_tokens(provider: str) -> int:
+    return int(get_today_usage().get(provider, {}).get("tokens", 0))
+
+
 def record_image_cost(usd: float) -> None:
     date_str = datetime.now().strftime("%Y-%m-%d")
     data = _load()

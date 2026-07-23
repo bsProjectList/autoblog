@@ -19,18 +19,22 @@ GOOGLE_SYSTEM = (
 
 def _naver_prompt(news: NewsItem) -> str:
     kw = ", ".join(news.keywords) if news.keywords else news.title
+    source_text = news.content or news.summary
     return f"""다음 경제 뉴스를 바탕으로 네이버 블로그 SEO 최적화 포스트를 작성하세요.
 
 [뉴스 정보]
 제목: {news.title}
 출처: {news.source}
-요약: {news.summary}
+RSS 요약: {news.summary}
+원문 본문:
+{source_text[:6000]}
 핵심 키워드: {kw}
 
 [작성 조건]
 - 분량: 최소 5000자 이상 (공백 포함), 7000자까지 허용
 - 자연스러운 한국어, 사람이 직접 쓴 느낌
 - AI 티 완전 제거
+- 원문에 없는 사건·수치·인용을 새로 만들지 말 것
 - 핵심 키워드를 제목과 본문에 자연스럽게 삽입
 - 각 섹션을 충분히 깊이 있게 서술. 내용이 부족하면 관련 배경지식·사례·통계를 추가
 - [중요] 아래 [포스트 구조]에 있는 '## 태그' 섹션에서 절대 끝내지 마세요. 그 뒤에 이어지는 [이미지 프롬프트] 섹션(THUMBNAIL, BODY_1, BODY_2, BODY_3 4줄)까지 반드시 작성해야 응답이 완료된 것입니다.
@@ -93,17 +97,21 @@ def _naver_prompt(news: NewsItem) -> str:
 
 def _google_prompt(news: NewsItem) -> str:
     kw = ", ".join(news.keywords) if news.keywords else news.title
+    source_text = news.content or news.summary
     return f"""다음 경제 뉴스를 바탕으로 구글 SEO 최적화 포스트를 작성하세요.
 
 [뉴스 정보]
 제목: {news.title}
 출처: {news.source}
-요약: {news.summary}
+RSS 요약: {news.summary}
+원문 본문:
+{source_text[:6000]}
 핵심 키워드: {kw}
 
 [작성 조건]
 - 분량: 최소 5000자 이상 (공백 포함), 8000자까지 허용
 - E-E-A-T 원칙 준수
+- 원문에 없는 사건·수치·인용을 새로 만들지 말 것
 - 첫 단락에 핵심 답변 포함 (Featured Snippet 최적화)
 - FAQ 섹션 필수 (5개 Q&A)
 - JSON-LD Article Schema 필수

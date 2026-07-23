@@ -1,15 +1,19 @@
 import sys
+import json
 from pathlib import Path
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 
 load_dotenv()
 
 from src.collector.rss import collect_rss_news
 from src.collector.playwright_crawler import crawl_naver_economy
+from src.collector.article import fetch_article_text
 from src.analyzer.importance import score_and_select_top10
 from src.generator.blog import generate_naver_post, generate_google_post
 from src.models import BlogPost, NewsItem
+from src.seo_check import run_seo_check
 
 OUTPUT_DIR = Path("output")
 TOP_N = 6  # Groq 무료 티어 일일 토큰 한도(TPD 100K) 내에서 안전하게 처리 가능한 뉴스 개수
@@ -18,6 +22,7 @@ SEO_GENERATORS = [
     (generate_naver_post, "Naver SEO"),
     (generate_google_post, "Google SEO"),
 ]
+KST = ZoneInfo("Asia/Seoul")
 
 
 def deduplicate(items: list) -> list:
@@ -43,9 +48,25 @@ def save_post(post: BlogPost, date_str: str) -> Path:
     return output_path
 
 
+def enrich_with_source(items: list, on_log=print) -> None:
+    for item in items:
+        content = fetch_article_text(item.url)
+        if content:
+            item.content = content
+            on_log(f"    원문 보강 완료: {item.title[:45]}")
+        else:
+            on_log(f"    원문 보강 실패 — RSS 요약 사용: {item.title[:45]}")
+
+
+def save_quality_report(date_str: str, records: list) -> Path:
+    path = OUTPUT_DIR / date_str / "_quality_report.json"
+    path.write_text(json.dumps(records, ensure_ascii=False, indent=2), encoding="utf-8")
+    return path
+
+
 def run_pipeline(top_n: int = TOP_N, seo_generators=None, on_log=print) -> list:
     seo_generators = SEO_GENERATORS if seo_generators is None else seo_generators
-    date_str = datetime.now().strftime("%Y-%m-%d")
+    date_str = datetime.now(KST).strftime("%Y-%m-%d")
     divider = "=" * 60
 
     on_log(f"\n{divider}")
@@ -78,11 +99,15 @@ def run_pipeline(top_n: int = TOP_N, seo_generators=None, on_log=print) -> list:
     for item in top_items:
         on_log(f"    {item.rank:2d}. [{item.importance_score:3.0f}점] {item.title[:55]}")
 
+    on_log("\n  선정 뉴스 원문 보강 수집 중...")
+    enrich_with_source(top_items, on_log=on_log)
+
     # ── Step 3: Generate ─────────────────────────────────────────
     on_log(f"\n[3단계] 블로그 포스트 생성 ({len(top_items) * len(seo_generators)}개 예정)...")
 
     saved: list = []
     errors: list = []
+    quality_records: list = []
 
     for news in top_items:
         on_log(f"\n  [{news.rank:2d}/{len(top_items)}] {news.title[:50]}")
@@ -93,6 +118,17 @@ def run_pipeline(top_n: int = TOP_N, seo_generators=None, on_log=print) -> list:
                 post = gen_fn(news)
                 path = save_post(post, date_str)
                 saved.append(path)
+                checks = run_seo_check(post.content)
+                failed = [check for check in checks if check["status"] == "fail"]
+                quality_records.append({
+                    "file": str(path),
+                    "title": post.title,
+                    "seo_type": post.seo_type,
+                    "checks": checks,
+                    "status": "fail" if failed else "pass",
+                })
+                if failed:
+                    on_log(f"    ⚠ 품질 경고 {len(failed)}건: {path.name}")
                 on_log(f"    → {label} 완료: {path}")
             except Exception as e:
                 on_log(f"    → {label} 실패: {e}")
@@ -103,7 +139,9 @@ def run_pipeline(top_n: int = TOP_N, seo_generators=None, on_log=print) -> list:
     on_log(f"  파이프라인 완료")
     on_log(f"  날짜: {date_str}")
     on_log(f"  생성된 포스트: {len(saved)}개 / 목표 {len(top_items) * len(seo_generators)}개")
+    report_path = save_quality_report(date_str, quality_records)
     on_log(f"  저장 위치: {OUTPUT_DIR / date_str}")
+    on_log(f"  품질 리포트: {report_path}")
     if errors:
         on_log(f"  오류: {len(errors)}건")
         for title, label, err in errors:

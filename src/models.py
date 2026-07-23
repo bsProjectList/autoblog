@@ -8,7 +8,7 @@ class NewsItem:
     url: str
     source: str
     summary: str
-    content: str = ""
+    content: str = ""  # 원문 보강 수집 결과
     published_at: str = ""
     importance_score: float = 0.0
     rank: int = 0

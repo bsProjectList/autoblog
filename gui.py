@@ -2,6 +2,7 @@ import io
 import json
 import os
 import re
+import subprocess
 import threading
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
@@ -138,11 +139,16 @@ class AutoBlogGUI(tb.Window):
         self.date_list.bind("<<ListboxSelect>>", self._on_date_select)
 
         ttk.Label(left, text="파일").pack(anchor="w", pady=(10, 0))
+        self.file_search_var = tk.StringVar()
+        search_entry = ttk.Entry(left, textvariable=self.file_search_var)
+        search_entry.pack(fill="x", pady=(2, 4))
+        search_entry.bind("<KeyRelease>", lambda _event: self._filter_files())
         self.file_list = self._style_listbox(tk.Listbox(left))
         self.file_list.pack(fill="both", expand=True)
         self.file_list.bind("<<ListboxSelect>>", self._on_file_select)
 
-        tb.Button(left, text="새로고침", command=self._refresh_dates, bootstyle="secondary").pack(fill="x", pady=5)
+        tb.Button(left, text="새로고침", command=self._refresh_dates, bootstyle="secondary").pack(fill="x", pady=3)
+        tb.Button(left, text="GitHub에서 pull", command=self._pull_latest, bootstyle="info").pack(fill="x", pady=3)
 
         right = ttk.Frame(self.viewer_tab)
         right.pack(side="left", fill="both", expand=True, padx=8, pady=8)
@@ -197,9 +203,49 @@ class AutoBlogGUI(tb.Window):
             return
         date_str = self.date_list.get(sel[0])
         self._current_folder = OUTPUT_DIR / date_str
+        self._filter_files()
+
+    def _filter_files(self):
         self.file_list.delete(0, tk.END)
+        if not self._current_folder or not self._current_folder.exists():
+            return
+        query = self.file_search_var.get().strip().lower()
         for f in sorted(self._current_folder.glob("*.md")):
-            self.file_list.insert(tk.END, f.name)
+            if not query or query in f.name.lower():
+                self.file_list.insert(tk.END, f.name)
+
+    def _pull_latest(self):
+        self.file_search_var.set("")
+        self.viewer_publish_status_var.set("상태: GitHub pull 중...")
+
+        def task():
+            try:
+                result = subprocess.run(
+                    ["git", "pull", "--rebase", "--autostash", "origin", "main"],
+                    cwd=Path(__file__).resolve().parent,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=120,
+                )
+                output = (result.stdout + "\n" + result.stderr).strip()
+                if result.returncode:
+                    raise RuntimeError(output[-1200:])
+                self.after(0, lambda: self._on_pull_done(output, None))
+            except Exception as error:
+                self.after(0, lambda: self._on_pull_done("", error))
+
+        threading.Thread(target=task, daemon=True).start()
+
+    def _on_pull_done(self, output, error):
+        if error:
+            self.viewer_publish_status_var.set("상태: pull 실패")
+            messagebox.showerror("GitHub pull 실패", str(error))
+            return
+        self.viewer_publish_status_var.set("상태: 최신 파일 반영 완료")
+        self._refresh_dates()
+        messagebox.showinfo("GitHub pull 완료", output[-1000:] or "변경 사항이 없습니다.")
 
     def _on_file_select(self, _event):
         sel = self.file_list.curselection()
@@ -1197,18 +1243,32 @@ class AutoBlogGUI(tb.Window):
         messagebox.showinfo("저장 완료", str(path))
 
     # ---------------- SNS 홍보 연동 helper ----------------
-    def _extract_summary_from_content(self, content: str, max_chars: int = 200) -> str:
-        for line in content.split("\n"):
-            line = line.strip()
-            if not line or line.startswith("#") or line.startswith(">") or line.startswith("!["):
-                continue
-            if re.match(r"^\d+[.)]\s", line) or line.startswith("-") or line.startswith("*"):
-                continue
-            line = re.sub(r"\*\*(.+?)\*\*", r"\1", line)
-            if len(line) < 40:
-                continue
-            return line[:max_chars]
-        return ""
+    def _extract_summary_from_content(self, content: str, max_chars: int = 1200) -> str:
+        """본문의 여러 문단을 SNS 생성용 사실 자료로 전달한다."""
+        body = re.split(
+            r"\n(?:\*\*THUMBNAIL\*\*|##\s*(?:태그|관련 태그|JSON-LD)|```)",
+            content,
+            maxsplit=1,
+            flags=re.IGNORECASE,
+        )[0]
+
+        paragraphs = []
+        for block in re.split(r"\n\s*\n", body):
+            lines = []
+            for raw_line in block.splitlines():
+                line = raw_line.strip()
+                if not line or line.startswith(("#", ">", "![")):
+                    continue
+                if re.match(r"^\d+[.)]\s", line) or line.startswith(("-", "*")):
+                    continue
+                line = re.sub(r"\*\*(.+?)\*\*", r"\1", line)
+                line = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", line)
+                lines.append(line)
+            paragraph = " ".join(lines).strip()
+            if len(paragraph) >= 40:
+                paragraphs.append(paragraph)
+
+        return "\n\n".join(paragraphs[:4])[:max_chars]
 
     def _send_to_sns_tab(self, title: str, content: str, url: str = ""):
         self.sns_title_var.set(title)
@@ -1307,7 +1367,13 @@ class AutoBlogGUI(tb.Window):
         self.sns_threads_text.insert("1.0", captions.get("threads", ""))
         self.sns_instagram_text.delete("1.0", tk.END)
         self.sns_instagram_text.insert("1.0", captions.get("instagram", ""))
-        self.sns_status_var.set("생성 완료. 각 박스의 '복사' 버튼으로 복사하세요.")
+        from src.generator.sns_promo import save_captions
+        saved_path = save_captions(
+            captions,
+            self.sns_title_var.get().strip(),
+            self.sns_url_var.get().strip(),
+        )
+        self.sns_status_var.set(f"생성 완료 및 저장됨: {saved_path}")
         self._refresh_usage_bar()
 
     def _copy_sns_text(self, text_widget):

@@ -1,6 +1,7 @@
 import os
+import time
 from groq import Groq, RateLimitError as GroqRateLimitError
-from src.usage_tracker import record_usage
+from src.usage_tracker import get_today_tokens, record_usage
 
 try:
     from openai import OpenAI, RateLimitError as OpenAIRateLimitError
@@ -10,6 +11,7 @@ except ImportError:
 
 GROQ_MODEL = "llama-3.3-70b-versatile"
 OPENAI_MODEL = "gpt-4o-mini"
+GROQ_DAILY_TOKEN_LIMIT = int(os.environ.get("GROQ_DAILY_TOKEN_LIMIT", "90000"))
 
 _groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 _openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY")) if (OpenAI and os.environ.get("OPENAI_API_KEY")) else None
@@ -27,17 +29,35 @@ def _fallback_to_openai(e: Exception):
     print(f"[LLM] Groq 한도 초과 → OpenAI({OPENAI_MODEL})로 자동 전환")
 
 
+def _groq_budget_exceeded() -> bool:
+    return get_today_tokens("groq") >= GROQ_DAILY_TOKEN_LIMIT
+
+
+def _request_with_retry(client, **kwargs):
+    last_error = None
+    for attempt in range(3):
+        try:
+            return client.chat.completions.create(**kwargs)
+        except Exception as error:
+            last_error = error
+            if attempt < 2:
+                time.sleep(2 ** attempt)
+    raise last_error
+
+
 def chat_completion(messages, temperature=0.7, max_tokens=4000, response_format=None):
     kwargs = {"messages": messages, "temperature": temperature, "max_tokens": max_tokens}
     if response_format:
         kwargs["response_format"] = response_format
 
     try:
-        response = _groq_client.chat.completions.create(model=GROQ_MODEL, **kwargs)
+        if _groq_budget_exceeded():
+            raise RuntimeError(f"Groq 일일 토큰 한도({GROQ_DAILY_TOKEN_LIMIT:,})에 도달했습니다.")
+        response = _request_with_retry(_groq_client, model=GROQ_MODEL, **kwargs)
         provider = "groq"
-    except GroqRateLimitError as e:
+    except Exception as e:
         _fallback_to_openai(e)
-        response = _openai_client.chat.completions.create(model=OPENAI_MODEL, **kwargs)
+        response = _request_with_retry(_openai_client, model=OPENAI_MODEL, **kwargs)
         provider = "openai"
 
     if getattr(response, "usage", None):
@@ -50,11 +70,13 @@ def stream_completion(messages, temperature=0.7, max_tokens=8000):
     kwargs = {"messages": messages, "temperature": temperature, "max_tokens": max_tokens, "stream": True}
 
     try:
-        stream = _groq_client.chat.completions.create(model=GROQ_MODEL, **kwargs)
+        if _groq_budget_exceeded():
+            raise RuntimeError(f"Groq 일일 토큰 한도({GROQ_DAILY_TOKEN_LIMIT:,})에 도달했습니다.")
+        stream = _request_with_retry(_groq_client, model=GROQ_MODEL, **kwargs)
         provider = "groq"
-    except GroqRateLimitError as e:
+    except Exception as e:
         _fallback_to_openai(e)
-        stream = _openai_client.chat.completions.create(model=OPENAI_MODEL, **kwargs)
+        stream = _request_with_retry(_openai_client, model=OPENAI_MODEL, **kwargs)
         provider = "openai"
 
     return _tracked_stream(stream, provider, messages)
