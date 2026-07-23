@@ -1,13 +1,13 @@
 [
   {
-    "file": "output/2026-07-23/01_2026-부동산정책-대토론회-개최_naver.md",
-    "title": "부동산정책 대토론회, 총리 주재로 개최되어",
+    "file": "output/2026-07-23/01_neoview-kosdaq-listing_naver.md",
+    "title": "토비스의 네오뷰, 코스닥 시장 분할재상장: 새로운 기회와 도전",
     "seo_type": "naver",
     "checks": [
       {
         "label": "제목 길이",
         "status": "pass",
-        "detail": "23자 — 적절합니다."
+        "detail": "34자 — 적절합니다."
       },
       {
         "label": "메타 디스크립션",
@@ -17,7 +17,7 @@
       {
         "label": "소제목(H2) 구조",
         "status": "pass",
-        "detail": "9개."
+        "detail": "10개."
       },
       {
         "label": "태그 개수",
@@ -32,30 +32,30 @@
       {
         "label": "본문 분량",
         "status": "warn",
-        "detail": "약 2242자 — 조금 더 늘리는 걸 권장."
+        "detail": "약 2208자 — 조금 더 늘리는 걸 권장."
       },
       {
         "label": "가독성(문단 길이)",
-        "status": "warn",
-        "detail": "500자 넘는 긴 문단 1개 발견 — 문단을 더 짧게 나누는 걸 권장."
+        "status": "pass",
+        "detail": "문단 길이 적절."
       }
     ],
     "status": "pass"
   },
   {
-    "file": "output/2026-07-23/01_2026-부동산정책-대토론회-개최_google.md",
-    "title": "대통령 이어 총리 주재 '부동산정책 대토론회' 27일 개최",
+    "file": "output/2026-07-23/01_neoview-kosdaq-listing_google.md",
+    "title": "토비스의 네오뷰, 코스닥 시장 분할재상장",
     "seo_type": "google",
     "checks": [
       {
         "label": "제목 길이",
         "status": "pass",
-        "detail": "32자 — 적절합니다."
+        "detail": "22자 — 적절합니다."
       },
       {
         "label": "메타 디스크립션",
         "status": "warn",
-        "detail": "78자 — 권장 100~160자."
+        "detail": "71자 — 권장 100~160자."
       },
       {
         "label": "소제목(H2) 구조",
@@ -75,7 +75,7 @@
       {
         "label": "본문 분량",
         "status": "warn",
-        "detail": "약 2772자 — 조금 더 늘리는 걸 권장."
+        "detail": "약 2611자 — 조금 더 늘리는 걸 권장."
       },
       {
         "label": "가독성(문단 길이)",
@@ -86,14 +86,14 @@
     "status": "pass"
   },
   {
-    "file": "output/2026-07-23/02_우리은행-네이버페이-퇴직연금-상담_naver.md",
-    "title": "\"은행 안 가도 OK\"…우리은행, 네이버페이서 퇴직연금 상담한다",
+    "file": "output/2026-07-23/02_mirae-asset-sec-stock-buyback_naver.md",
+    "title": "미래에셋증권, 5천억원 자사주 소각…주주 환원 의지 확고",
     "seo_type": "naver",
     "checks": [
       {
         "label": "제목 길이",
         "status": "pass",
-        "detail": "35자 — 적절합니다."
+        "detail": "31자 — 적절합니다."
       },
       {
         "label": "메타 디스크립션",
@@ -108,7 +108,7 @@
       {
         "label": "태그 개수",
         "status": "pass",
-        "detail": "14개."
+        "detail": "20개."
       },
       {
         "label": "이미지",
@@ -118,25 +118,111 @@
       {
         "label": "본문 분량",
         "status": "warn",
-        "detail": "약 2444자 — 조금 더 늘리는 걸 권장."
+        "detail": "약 2385자 — 조금 더 늘리는 걸 권장."
       },
       {
         "label": "가독성(문단 길이)",
-        "status": "warn",
-        "detail": "500자 넘는 긴 문단 1개 발견 — 문단을 더 짧게 나누는 걸 권장."
+        "status": "pass",
+        "detail": "문단 길이 적절."
       }
     ],
     "status": "pass"
   },
   {
-    "file": "output/2026-07-23/02_우리은행-네이버페이-퇴직연금-상담_google.md",
-    "title": "\"은행 안 가도 OK\"…우리은행, 네이버페이서 퇴직연금 상담한다",
+    "file": "output/2026-07-23/02_mirae-asset-sec-stock-buyback_google.md",
+    "title": "미래에셋증권, 5천24억원 자사주 소각…\"역대 최대 규모\"",
     "seo_type": "google",
     "checks": [
       {
         "label": "제목 길이",
         "status": "pass",
-        "detail": "35자 — 적절합니다."
+        "detail": "32자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "warn",
+        "detail": "68자 — 권장 100~160자."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2798자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-07-23/03_bok-financial-stability-bonds_naver.md",
+    "title": "한국은행, 8월에 최대 6.8조원 통화안정증권 발행 계획 발표",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "34자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2713자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-07-23/03_bok-financial-stability-bonds_google.md",
+    "title": "한은, 8월 최대 6.8조원 규모 통화안정증권 발행",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "28자 — 적절합니다."
       },
       {
         "label": "메타 디스크립션",
@@ -151,7 +237,7 @@
       {
         "label": "태그 개수",
         "status": "pass",
-        "detail": "16개."
+        "detail": "20개."
       },
       {
         "label": "이미지",
@@ -161,7 +247,7 @@
       {
         "label": "본문 분량",
         "status": "warn",
-        "detail": "약 2844자 — 조금 더 늘리는 걸 권장."
+        "detail": "약 2723자 — 조금 더 늘리는 걸 권장."
       },
       {
         "label": "가독성(문단 길이)",
@@ -172,14 +258,100 @@
     "status": "pass"
   },
   {
-    "file": "output/2026-07-23/03_이재명-대통령-보유세-강화-공감_naver.md",
-    "title": "이재명 대통령의 부동산 정책 방향: 보유세 강화와 전세대출 규제",
+    "file": "output/2026-07-23/04_korean-brokerage-firms-earning_naver.md",
+    "title": "증권사 어닝시즌 개막…KB·NH 최대 실적에 '호실적 랠리' 기대",
     "seo_type": "naver",
     "checks": [
       {
         "label": "제목 길이",
         "status": "pass",
-        "detail": "35자 — 적절합니다."
+        "detail": "36자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "18개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 1926자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "warn",
+        "detail": "500자 넘는 긴 문단 1개 발견 — 문단을 더 짧게 나누는 걸 권장."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-07-23/04_korean-brokerage-firms-earning_google.md",
+    "title": "증권사 어닝시즌 개막…KB·NH 최대 실적에 '호실적 랠리' 기대",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "36자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "pass",
+        "detail": "110자 — 적절합니다."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "10개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "17개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2487자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-07-23/05_korean-government-real-estate-_naver.md",
+    "title": "정부의 부동산 정책, 총리 주재 대토론회에서의 방향성은?",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "31자 — 적절합니다."
       },
       {
         "label": "메타 디스크립션",
@@ -203,8 +375,8 @@
       },
       {
         "label": "본문 분량",
-        "status": "pass",
-        "detail": "약 3280자."
+        "status": "warn",
+        "detail": "약 2667자 — 조금 더 늘리는 걸 권장."
       },
       {
         "label": "가독성(문단 길이)",
@@ -215,105 +387,19 @@
     "status": "pass"
   },
   {
-    "file": "output/2026-07-23/03_이재명-대통령-보유세-강화-공감_google.md",
-    "title": "李 \"보유세 강화 공감\"…전세대출 규제도 손질 시사",
+    "file": "output/2026-07-23/05_korean-government-real-estate-_google.md",
+    "title": "대통령 이어 총리 주재 '부동산정책 대토론회' 27일 개최",
     "seo_type": "google",
     "checks": [
       {
         "label": "제목 길이",
         "status": "pass",
-        "detail": "28자 — 적절합니다."
-      },
-      {
-        "label": "메타 디스크립션",
-        "status": "pass",
-        "detail": "143자 — 적절합니다."
-      },
-      {
-        "label": "소제목(H2) 구조",
-        "status": "pass",
-        "detail": "9개."
-      },
-      {
-        "label": "태그 개수",
-        "status": "warn",
-        "detail": "8개 — 10개 이상 권장."
-      },
-      {
-        "label": "이미지",
-        "status": "warn",
-        "detail": "본문에 이미지가 없습니다."
-      },
-      {
-        "label": "본문 분량",
-        "status": "warn",
-        "detail": "약 2899자 — 조금 더 늘리는 걸 권장."
-      },
-      {
-        "label": "가독성(문단 길이)",
-        "status": "pass",
-        "detail": "문단 길이 적절."
-      }
-    ],
-    "status": "pass"
-  },
-  {
-    "file": "output/2026-07-23/04_2026-국고채-금리-보합권-마감_naver.md",
-    "title": "깜짝 성장률에도 국고채 금리 보합권 마감: 한국 경제의 현황과 전망",
-    "seo_type": "naver",
-    "checks": [
-      {
-        "label": "제목 길이",
-        "status": "pass",
-        "detail": "37자 — 적절합니다."
-      },
-      {
-        "label": "메타 디스크립션",
-        "status": "info",
-        "detail": "없음 (이 글 형식엔 필수 아님)."
-      },
-      {
-        "label": "소제목(H2) 구조",
-        "status": "pass",
-        "detail": "9개."
-      },
-      {
-        "label": "태그 개수",
-        "status": "pass",
-        "detail": "14개."
-      },
-      {
-        "label": "이미지",
-        "status": "warn",
-        "detail": "본문에 이미지가 없습니다."
-      },
-      {
-        "label": "본문 분량",
-        "status": "warn",
-        "detail": "약 2901자 — 조금 더 늘리는 걸 권장."
-      },
-      {
-        "label": "가독성(문단 길이)",
-        "status": "warn",
-        "detail": "500자 넘는 긴 문단 1개 발견 — 문단을 더 짧게 나누는 걸 권장."
-      }
-    ],
-    "status": "pass"
-  },
-  {
-    "file": "output/2026-07-23/04_2026-국고채-금리-보합권-마감_google.md",
-    "title": "2분기 깜짝 성장률에도 국고채 금리 보합권 마감",
-    "seo_type": "google",
-    "checks": [
-      {
-        "label": "제목 길이",
-        "status": "pass",
-        "detail": "26자 — 적절합니다."
+        "detail": "32자 — 적절합니다."
       },
       {
         "label": "메타 디스크립션",
         "status": "warn",
-        "detail": "76자 — 권장 100~160자."
+        "detail": "54자 — 권장 100~160자."
       },
       {
         "label": "소제목(H2) 구조",
@@ -333,7 +419,7 @@
       {
         "label": "본문 분량",
         "status": "warn",
-        "detail": "약 2603자 — 조금 더 늘리는 걸 권장."
+        "detail": "약 2689자 — 조금 더 늘리는 걸 권장."
       },
       {
         "label": "가독성(문단 길이)",
@@ -344,14 +430,14 @@
     "status": "pass"
   },
   {
-    "file": "output/2026-07-23/05_삼성전자-SK하이닉스-외국인-순매수_naver.md",
-    "title": "삼성전자·SK하이닉스, 외인 수혜로 3∼4% 급등...외국인 순매수 1·2위",
+    "file": "output/2026-07-23/06_people-power-party-president-l_naver.md",
+    "title": "이재명 대통령, 부동산 보유세 3배 인상 발언에 대한 논란",
     "seo_type": "naver",
     "checks": [
       {
         "label": "제목 길이",
         "status": "pass",
-        "detail": "42자 — 적절합니다."
+        "detail": "32자 — 적절합니다."
       },
       {
         "label": "메타 디스크립션",
@@ -366,7 +452,7 @@
       {
         "label": "태그 개수",
         "status": "pass",
-        "detail": "23개."
+        "detail": "20개."
       },
       {
         "label": "이미지",
@@ -376,50 +462,7 @@
       {
         "label": "본문 분량",
         "status": "warn",
-        "detail": "약 2764자 — 조금 더 늘리는 걸 권장."
-      },
-      {
-        "label": "가독성(문단 길이)",
-        "status": "warn",
-        "detail": "500자 넘는 긴 문단 1개 발견 — 문단을 더 짧게 나누는 걸 권장."
-      }
-    ],
-    "status": "pass"
-  },
-  {
-    "file": "output/2026-07-23/05_삼성전자-SK하이닉스-외국인-순매수_google.md",
-    "title": "삼성전자와 SK하이닉스의 급등: 외국인 순매수 1·2위",
-    "seo_type": "google",
-    "checks": [
-      {
-        "label": "제목 길이",
-        "status": "pass",
-        "detail": "30자 — 적절합니다."
-      },
-      {
-        "label": "메타 디스크립션",
-        "status": "warn",
-        "detail": "66자 — 권장 100~160자."
-      },
-      {
-        "label": "소제목(H2) 구조",
-        "status": "pass",
-        "detail": "9개."
-      },
-      {
-        "label": "태그 개수",
-        "status": "pass",
-        "detail": "25개."
-      },
-      {
-        "label": "이미지",
-        "status": "warn",
-        "detail": "본문에 이미지가 없습니다."
-      },
-      {
-        "label": "본문 분량",
-        "status": "warn",
-        "detail": "약 2116자 — 조금 더 늘리는 걸 권장."
+        "detail": "약 2675자 — 조금 더 늘리는 걸 권장."
       },
       {
         "label": "가독성(문단 길이)",
@@ -430,62 +473,19 @@
     "status": "pass"
   },
   {
-    "file": "output/2026-07-23/06_AI-인프라-빅테크-1800조-투자_naver.md",
-    "title": "AI 인프라에 1800조 투자, 빅테크의 메모리 확보전",
-    "seo_type": "naver",
-    "checks": [
-      {
-        "label": "제목 길이",
-        "status": "pass",
-        "detail": "30자 — 적절합니다."
-      },
-      {
-        "label": "메타 디스크립션",
-        "status": "info",
-        "detail": "없음 (이 글 형식엔 필수 아님)."
-      },
-      {
-        "label": "소제목(H2) 구조",
-        "status": "pass",
-        "detail": "9개."
-      },
-      {
-        "label": "태그 개수",
-        "status": "pass",
-        "detail": "13개."
-      },
-      {
-        "label": "이미지",
-        "status": "warn",
-        "detail": "본문에 이미지가 없습니다."
-      },
-      {
-        "label": "본문 분량",
-        "status": "warn",
-        "detail": "약 2255자 — 조금 더 늘리는 걸 권장."
-      },
-      {
-        "label": "가독성(문단 길이)",
-        "status": "warn",
-        "detail": "500자 넘는 긴 문단 1개 발견 — 문단을 더 짧게 나누는 걸 권장."
-      }
-    ],
-    "status": "pass"
-  },
-  {
-    "file": "output/2026-07-23/06_AI-인프라-빅테크-1800조-투자_google.md",
-    "title": "AI 인프라에 1800조 투자하는 빅테크…삼성전자와 SK하이닉스 메모리 시장의未来",
+    "file": "output/2026-07-23/06_people-power-party-president-l_google.md",
+    "title": "국힘 \"李대통령, 본인 집 팔자마자 '보유세 3배' 들먹여\"",
     "seo_type": "google",
     "checks": [
       {
         "label": "제목 길이",
         "status": "pass",
-        "detail": "45자 — 적절합니다."
+        "detail": "33자 — 적절합니다."
       },
       {
         "label": "메타 디스크립션",
         "status": "warn",
-        "detail": "97자 — 권장 100~160자."
+        "detail": "54자 — 권장 100~160자."
       },
       {
         "label": "소제목(H2) 구조",
@@ -494,8 +494,8 @@
       },
       {
         "label": "태그 개수",
-        "status": "warn",
-        "detail": "8개 — 10개 이상 권장."
+        "status": "pass",
+        "detail": "20개."
       },
       {
         "label": "이미지",
@@ -505,7 +505,7 @@
       {
         "label": "본문 분량",
         "status": "warn",
-        "detail": "약 2307자 — 조금 더 늘리는 걸 권장."
+        "detail": "약 2631자 — 조금 더 늘리는 걸 권장."
       },
       {
         "label": "가독성(문단 길이)",
