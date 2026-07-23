@@ -44,6 +44,38 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: python main.py
 
+      - name: Prepare run summary
+        if: always()
+        run: |
+          export RUN_DATE=$(TZ=Asia/Seoul date +'%Y-%m-%d')
+          RUN_DIR="output/$RUN_DATE"
+          if [ -d "$RUN_DIR" ]; then
+            NEW_POSTS=$(find "$RUN_DIR" -maxdepth 1 -type f -name '*.md' | wc -l | tr -d ' ')
+            NAVER_POSTS=$(find "$RUN_DIR" -maxdepth 1 -type f -name '*_naver.md' | wc -l | tr -d ' ')
+            GOOGLE_POSTS=$(find "$RUN_DIR" -maxdepth 1 -type f -name '*_google.md' | wc -l | tr -d ' ')
+          else
+            NEW_POSTS=0
+            NAVER_POSTS=0
+            GOOGLE_POSTS=0
+          fi
+          QUALITY_REPORT="$RUN_DIR/_quality_report.json"
+          if [ -f "$QUALITY_REPORT" ]; then
+            QUALITY_TOTAL=$(python -c 'import json; d=json.load(open("output/"+__import__("os").environ["RUN_DATE"]+"/_quality_report.json")); print(len(d))')
+            QUALITY_WARNINGS=$(python -c 'import json; d=json.load(open("output/"+__import__("os").environ["RUN_DATE"]+"/_quality_report.json")); print(sum(1 for x in d if x.get("status") != "pass"))')
+          else
+            QUALITY_TOTAL=0
+            QUALITY_WARNINGS=0
+          fi
+          {
+            echo "RUN_DATE=$RUN_DATE"
+            echo "NEW_POSTS=$NEW_POSTS"
+            echo "NAVER_POSTS=$NAVER_POSTS"
+            echo "GOOGLE_POSTS=$GOOGLE_POSTS"
+            echo "QUALITY_TOTAL=$QUALITY_TOTAL"
+            echo "QUALITY_WARNINGS=$QUALITY_WARNINGS"
+            echo "RUN_DIR=$RUN_DIR"
+          } >> "$GITHUB_ENV"
+
       - name: Commit and push generated posts
         run: |
           git config user.name "AutoBlog Bot"
@@ -68,8 +100,8 @@ jobs:
             echo "DISCORD_WEBHOOK_URL secret is not configured; skipping notification."
             exit 0
           fi
-          export COUNT=$(find output -type f -name '*.md' | wc -l | tr -d ' ')
-          python -c 'import json, os; status=os.environ["JOB_STATUS"]; icon="✅" if status == "success" else "❌"; payload={"content": icon+" AutoBlog Actions: "+status+"\n생성된 Markdown 파일: "+os.environ["COUNT"]+"개"}; print(json.dumps(payload, ensure_ascii=False))' > /tmp/discord_payload.json
+          export COMMIT_SHA=$(git rev-parse --short HEAD)
+          python -c 'import json, os; status=os.environ["JOB_STATUS"]; icon="✅" if status == "success" else "❌"; content=(icon+" AutoBlog 일일 실행 결과\n"+"상태: "+status+"\n"+"생성일(KST): "+os.environ.get("RUN_DATE","확인 불가")+"\n"+"신규 글: "+os.environ.get("NEW_POSTS","0")+"개 (네이버 "+os.environ.get("NAVER_POSTS","0")+"개 / 구글 "+os.environ.get("GOOGLE_POSTS","0")+"개)\n"+"품질 검사: "+os.environ.get("QUALITY_TOTAL","0")+"개 검사, 경고 "+os.environ.get("QUALITY_WARNINGS","0")+"개\n"+"저장 경로: "+os.environ.get("RUN_DIR","output")+"\n"+"커밋: "+os.environ.get("COMMIT_SHA","확인 불가")+"\n"+"받아오기: git pull origin main"); print(json.dumps({"content": content}, ensure_ascii=False))' > /tmp/discord_payload.json
           HTTP_CODE=$(curl -sS -o /tmp/discord_response.txt -w "%{http_code}" -X POST -H "Content-Type: application/json" --data-binary @/tmp/discord_payload.json "$DISCORD_WEBHOOK_URL")
           echo "Discord webhook HTTP status: $HTTP_CODE"
           if [[ "$HTTP_CODE" != 2* ]]; then
