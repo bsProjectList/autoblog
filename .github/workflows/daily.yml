@@ -57,3 +57,16 @@ jobs:
             sleep 5
           done
           exit 1
+
+      - name: Notify Discord
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL secret is not configured; skipping notification."
+            exit 0
+          fi
+          export COUNT=$(find output -type f -name '*.md' | wc -l | tr -d ' ')
+          python -c 'import json, os; status=os.environ["JOB_STATUS"]; icon="✅" if status == "success" else "❌"; payload={"content": icon+" AutoBlog Actions: "+status+"\n생성된 Markdown 파일: "+os.environ["COUNT"]+"개"}; print(json.dumps(payload, ensure_ascii=False))' | curl -fsS -X POST -H "Content-Type: application/json" --data-binary @- "$DISCORD_WEBHOOK_URL" || echo "Discord notification failed; keeping job result unchanged."
