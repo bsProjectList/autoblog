@@ -1,8 +1,10 @@
 """YouTube Shorts metadata and transcript extraction."""
 
 import html
+import base64
 import os
 import re
+import subprocess
 import tempfile
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -93,6 +95,54 @@ def _transcribe_audio(info: dict) -> str:
             return ""
 
 
+def _analyze_video_frames(info: dict) -> str:
+    """대표 프레임의 상품명·가격·화면 문구를 비전 모델로 추출한다."""
+    if not os.environ.get("OPENAI_API_KEY"):
+        return ""
+    try:
+        import imageio_ffmpeg
+        import yt_dlp
+        from openai import OpenAI
+
+        with tempfile.TemporaryDirectory(prefix="autoblog-shorts-video-") as temp_dir:
+            video_template = str(Path(temp_dir) / "video.%(ext)s")
+            options = {
+                "format": "worst[ext=mp4]/worst",
+                "outtmpl": video_template,
+                "noplaylist": True,
+                "quiet": True,
+                "no_warnings": True,
+            }
+            with yt_dlp.YoutubeDL(options) as ydl:
+                ydl.download([info["webpage_url"]])
+            videos = list(Path(temp_dir).glob("video.*"))
+            if not videos:
+                return ""
+            frame_pattern = str(Path(temp_dir) / "frame-%02d.jpg")
+            subprocess.run(
+                [imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-i", str(videos[0]), "-vf", "fps=1/5,scale=720:-1", "-frames:v", "3", frame_pattern],
+                check=True,
+                capture_output=True,
+            )
+            frames = sorted(Path(temp_dir).glob("frame-*.jpg"))
+            if not frames:
+                return ""
+            content = [{"type": "text", "text": "이 쇼츠 화면에서 읽을 수 있는 상품명, 가격, 브랜드명, 핵심 문구만 한국어로 추출하세요. 보이지 않는 내용은 추측하지 말고 '확인 불가'라고 하세요."}]
+            for frame in frames:
+                encoded = base64.b64encode(frame.read_bytes()).decode("ascii")
+                content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded}", "detail": "low"}})
+            response = OpenAI(api_key=os.environ["OPENAI_API_KEY"]).chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": content}],
+                temperature=0.1,
+                max_tokens=800,
+            )
+            return response.choices[0].message.content.strip()
+    except Exception as exc:
+        print(f"[Shorts] 화면 분석 실패: {exc}")
+        return ""
+
+
 def extract_shorts(url: str) -> dict:
     """공개 쇼츠의 정보와 자막을 반환한다. 자막이 없으면 음성 인식을 시도한다."""
     video_id = extract_video_id(url)
@@ -112,6 +162,7 @@ def extract_shorts(url: str) -> dict:
     if not transcript:
         transcript = _transcribe_audio({**info, "webpage_url": url})
         transcript_source = "음성 인식" if transcript else "없음"
+    visual_text = _analyze_video_frames({**info, "webpage_url": url})
 
     return {
         "video_id": video_id,
@@ -123,4 +174,5 @@ def extract_shorts(url: str) -> dict:
         "duration": info.get("duration") or 0,
         "transcript": transcript,
         "transcript_source": transcript_source,
+        "visual_text": visual_text,
     }

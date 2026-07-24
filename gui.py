@@ -349,7 +349,12 @@ class AutoBlogGUI(tb.Window):
             return
         self._shorts_source = data
         self.shorts_transcript_text.delete("1.0", tk.END)
-        self.shorts_transcript_text.insert("1.0", data.get("transcript", "") or data.get("description", ""))
+        transcript = data.get("transcript", "") or data.get("description", "")
+        visual_text = data.get("visual_text", "")
+        display_text = transcript
+        if visual_text:
+            display_text += f"\n\n[화면 분석 결과]\n{visual_text}"
+        self.shorts_transcript_text.insert("1.0", display_text)
         self.shorts_info_var.set(
             f"제목: {data.get('title', '')} | 채널: {data.get('channel', '')} | 내용 출처: {data.get('transcript_source', '없음')}"
         )

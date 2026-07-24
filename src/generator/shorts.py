@@ -33,6 +33,8 @@ def generate_shorts_post(source: dict, products: List[Dict[str, str]], seo_type:
 설명: {source.get('description', '')[:2500]}
 추출된 음성/자막({source.get('transcript_source', '알 수 없음')}):
 {transcript[:7000]}
+화면에서 추출한 상품명·가격·문구:
+{source.get('visual_text', '')[:3000] or '(화면 분석 결과 없음)'}
 
 [사용자가 입력한 쿠팡 상품 링크]
 {product_text}

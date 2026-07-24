@@ -8,3 +8,4 @@ pillow>=10.0.0
 pyperclip>=1.8.0
 ttkbootstrap>=2.0.0
 yt-dlp>=2024.12.13
+imageio-ffmpeg>=0.5.1
