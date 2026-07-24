@@ -44,11 +44,13 @@ class AutoBlogGUI(tb.Window):
         self.viewer_tab = ttk.Frame(notebook)
         self.affiliate_tab = ttk.Frame(notebook)
         self.blog_writer_tab = ttk.Frame(notebook)
+        self.shorts_tab = ttk.Frame(notebook)
         self.sns_promo_tab = ttk.Frame(notebook)
         self.pipeline_tab = ttk.Frame(notebook)
         notebook.add(self.viewer_tab, text="생성된 글 보기")
         notebook.add(self.affiliate_tab, text="제휴 글 생성")
         notebook.add(self.blog_writer_tab, text="블로그 글 작성")
+        notebook.add(self.shorts_tab, text="쇼츠 → 블로그")
         notebook.add(self.sns_promo_tab, text="SNS 홍보")
         notebook.add(self.pipeline_tab, text="파이프라인 실행")
 
@@ -69,6 +71,7 @@ class AutoBlogGUI(tb.Window):
         self._tistory_photos = []
 
         self._build_viewer_tab()
+        self._build_shorts_tab()
         self._build_affiliate_tab()
         self._build_blog_writer_tab()
         self._build_sns_promo_tab()
@@ -191,7 +194,7 @@ class AutoBlogGUI(tb.Window):
         if not OUTPUT_DIR.exists():
             return
         dates = sorted(
-            (d.name for d in OUTPUT_DIR.iterdir() if d.is_dir() and d.name not in ("affiliate", "blog_writer")),
+            (d.name for d in OUTPUT_DIR.iterdir() if d.is_dir() and d.name not in ("affiliate", "blog_writer", "shorts")),
             reverse=True,
         )
         for d in dates:
@@ -265,6 +268,152 @@ class AutoBlogGUI(tb.Window):
         else:
             self.viewer_publish_status_var.set("상태: 초안")
             self.viewer_publish_url_var.set("")
+
+    # ---------------- YouTube Shorts → 블로그 ----------------
+    def _build_shorts_tab(self):
+        tab = self.shorts_tab
+        top = ttk.Frame(tab)
+        top.pack(fill="x", padx=10, pady=10)
+        ttk.Label(top, text="YouTube Shorts URL:").pack(side="left")
+        self.shorts_url_var = tk.StringVar()
+        ttk.Entry(top, textvariable=self.shorts_url_var).pack(side="left", fill="x", expand=True, padx=6)
+        self.shorts_extract_btn = tb.Button(top, text="내용 추출", command=self._extract_shorts, bootstyle="info")
+        self.shorts_extract_btn.pack(side="left")
+
+        self.shorts_info_var = tk.StringVar(value="쇼츠 URL을 입력하고 내용을 추출하세요.")
+        ttk.Label(tab, textvariable=self.shorts_info_var).pack(anchor="w", padx=10)
+
+        transcript_box = ttk.LabelFrame(tab, text="추출된 내용")
+        transcript_box.pack(fill="both", expand=True, padx=10, pady=6)
+        self.shorts_transcript_text = self._style_text_widget(scrolledtext.ScrolledText(transcript_box, height=8, wrap="word"))
+        self.shorts_transcript_text.pack(fill="both", expand=True, padx=5, pady=5)
+
+        products_box = ttk.LabelFrame(tab, text="쿠팡파트너스 상품 링크 (직접 입력)")
+        products_box.pack(fill="x", padx=10, pady=6)
+        self.shorts_products_frame = ttk.Frame(products_box)
+        self.shorts_products_frame.pack(fill="x", padx=5, pady=5)
+        tb.Button(products_box, text="상품 링크 추가", command=self._add_shorts_product_row, bootstyle="secondary").pack(
+            anchor="w", padx=5, pady=(0, 5)
+        )
+        self._shorts_product_rows = []
+        self._add_shorts_product_row()
+
+        controls = ttk.Frame(tab)
+        controls.pack(fill="x", padx=10, pady=5)
+        self.shorts_naver_var = tk.BooleanVar(value=True)
+        self.shorts_google_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(controls, text="네이버", variable=self.shorts_naver_var).pack(side="left")
+        ttk.Checkbutton(controls, text="구글", variable=self.shorts_google_var).pack(side="left", padx=8)
+        self.shorts_generate_btn = tb.Button(controls, text="블로그 글 생성", command=self._generate_shorts_blog, bootstyle="primary")
+        self.shorts_generate_btn.pack(side="left", padx=10)
+        self.shorts_status_var = tk.StringVar(value="대기 중")
+        ttk.Label(controls, textvariable=self.shorts_status_var).pack(side="left")
+
+        self.shorts_result_text = self._style_text_widget(scrolledtext.ScrolledText(tab, height=12, wrap="word"))
+        self.shorts_result_text.pack(fill="both", expand=True, padx=10, pady=5)
+
+    def _add_shorts_product_row(self):
+        row = ttk.Frame(self.shorts_products_frame)
+        row.pack(fill="x", pady=2)
+        name_var = tk.StringVar()
+        url_var = tk.StringVar()
+        ttk.Label(row, text="상품명").pack(side="left")
+        ttk.Entry(row, textvariable=name_var, width=24).pack(side="left", padx=4)
+        ttk.Label(row, text="쿠팡 링크").pack(side="left")
+        ttk.Entry(row, textvariable=url_var).pack(side="left", fill="x", expand=True, padx=4)
+        self._shorts_product_rows.append((name_var, url_var, row))
+
+    def _extract_shorts(self):
+        url = self.shorts_url_var.get().strip()
+        if not url:
+            messagebox.showwarning("알림", "YouTube Shorts URL을 입력하세요.")
+            return
+        self.shorts_extract_btn.config(state="disabled")
+        self.shorts_status_var.set("쇼츠 내용 추출 중...")
+
+        def task():
+            try:
+                from src.collector.youtube_shorts import extract_shorts
+                data = extract_shorts(url)
+                self.after(0, lambda: self._on_shorts_extracted(data, None))
+            except Exception as error:
+                self.after(0, lambda: self._on_shorts_extracted(None, error))
+
+        threading.Thread(target=task, daemon=True).start()
+
+    def _on_shorts_extracted(self, data, error):
+        self.shorts_extract_btn.config(state="normal")
+        if error:
+            self.shorts_status_var.set("추출 실패")
+            messagebox.showerror("쇼츠 추출 실패", str(error))
+            return
+        self._shorts_source = data
+        self.shorts_transcript_text.delete("1.0", tk.END)
+        self.shorts_transcript_text.insert("1.0", data.get("transcript", "") or data.get("description", ""))
+        self.shorts_info_var.set(
+            f"제목: {data.get('title', '')} | 채널: {data.get('channel', '')} | 내용 출처: {data.get('transcript_source', '없음')}"
+        )
+        self.shorts_status_var.set("추출 완료. 쿠팡 링크를 입력하세요.")
+
+    def _generate_shorts_blog(self):
+        source = getattr(self, "_shorts_source", None)
+        if not source:
+            messagebox.showwarning("알림", "먼저 쇼츠 내용을 추출하세요.")
+            return
+        products = [
+            {"name": name.get().strip(), "url": url.get().strip()}
+            for name, url, _row in self._shorts_product_rows
+            if url.get().strip()
+        ]
+        if not products:
+            messagebox.showwarning("알림", "쿠팡 링크를 하나 이상 입력하세요.")
+            return
+        generators = []
+        if self.shorts_naver_var.get():
+            generators.append("naver")
+        if self.shorts_google_var.get():
+            generators.append("google")
+        if not generators:
+            messagebox.showwarning("알림", "네이버 또는 구글을 선택하세요.")
+            return
+        self.shorts_generate_btn.config(state="disabled")
+        self.shorts_status_var.set("블로그 글 생성 중...")
+
+        def task():
+            try:
+                from src.generator.shorts import generate_shorts_post
+                posts = [generate_shorts_post(source, products, seo_type) for seo_type in generators]
+                self.after(0, lambda: self._on_shorts_generated(posts, None))
+            except Exception as error:
+                self.after(0, lambda: self._on_shorts_generated(None, error))
+
+        threading.Thread(target=task, daemon=True).start()
+
+    def _on_shorts_generated(self, posts, error):
+        self.shorts_generate_btn.config(state="normal")
+        if error:
+            self.shorts_status_var.set("생성 실패")
+            messagebox.showerror("쇼츠 글 생성 실패", str(error))
+            return
+        self._shorts_posts = posts
+        self.shorts_result_text.delete("1.0", tk.END)
+        for index, post in enumerate(posts):
+            self.shorts_result_text.insert("end", f"===== {post.seo_type.upper()} =====\n{post.content}\n\n")
+        paths = self._save_shorts_posts(posts)
+        self.shorts_status_var.set(f"생성·저장 완료: {len(paths)}개")
+        self._refresh_usage_bar()
+
+    def _save_shorts_posts(self, posts):
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        folder = OUTPUT_DIR / "shorts" / date_str
+        folder.mkdir(parents=True, exist_ok=True)
+        paths = []
+        for post in posts:
+            slug = re.sub(r"[^0-9A-Za-z가-힣_-]+", "-", post.title).strip("-")[:70] or "shorts"
+            path = folder / f"{slug}_{post.seo_type}.md"
+            path.write_text(post.content, encoding="utf-8")
+            paths.append(path)
+        return paths
 
     def _mark_viewer_post_published(self):
         path = getattr(self, "_current_file_path", None)
