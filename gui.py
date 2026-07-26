@@ -45,12 +45,14 @@ class AutoBlogGUI(tb.Window):
         self.affiliate_tab = ttk.Frame(notebook)
         self.blog_writer_tab = ttk.Frame(notebook)
         self.shorts_tab = ttk.Frame(notebook)
+        self.goal_tab = ttk.Frame(notebook)
         self.sns_promo_tab = ttk.Frame(notebook)
         self.pipeline_tab = ttk.Frame(notebook)
         notebook.add(self.viewer_tab, text="생성된 글 보기")
         notebook.add(self.affiliate_tab, text="제휴 글 생성")
         notebook.add(self.blog_writer_tab, text="블로그 글 작성")
         notebook.add(self.shorts_tab, text="쇼츠 → 블로그")
+        notebook.add(self.goal_tab, text="월 300만원")
         notebook.add(self.sns_promo_tab, text="SNS 홍보")
         notebook.add(self.pipeline_tab, text="파이프라인 실행")
 
@@ -72,6 +74,7 @@ class AutoBlogGUI(tb.Window):
 
         self._build_viewer_tab()
         self._build_shorts_tab()
+        self._build_goal_tab()
         self._build_affiliate_tab()
         self._build_blog_writer_tab()
         self._build_sns_promo_tab()
@@ -419,6 +422,136 @@ class AutoBlogGUI(tb.Window):
             path.write_text(post.content, encoding="utf-8")
             paths.append(path)
         return paths
+
+    # ---------------- 쿠팡파트너스 월 300만원 대시보드 ----------------
+    def _build_goal_tab(self):
+        from src.goal_tracker import load_state
+
+        self.goal_state = load_state()
+        tab = self.goal_tab
+        header = ttk.Frame(tab)
+        header.pack(fill="x", padx=10, pady=8)
+        ttk.Label(header, text="쿠팡파트너스 월 300만원 운영 대시보드", font=("Segoe UI", 15, "bold")).pack(side="left")
+        self.goal_status_var = tk.StringVar(value="전략과 오늘의 실행 기록을 저장하세요.")
+        ttk.Label(header, textvariable=self.goal_status_var).pack(side="right")
+
+        kpi = ttk.Frame(tab)
+        kpi.pack(fill="x", padx=10, pady=(0, 8))
+        self.goal_target_var = tk.StringVar(value=str(self.goal_state["target_revenue"]))
+        self.goal_current_var = tk.StringVar(value=str(self.goal_state["current_revenue"]))
+        ttk.Label(kpi, text="월 목표 수익(원)").pack(side="left")
+        ttk.Entry(kpi, textvariable=self.goal_target_var, width=12).pack(side="left", padx=4)
+        ttk.Label(kpi, text="현재 수익(원)").pack(side="left", padx=(12, 0))
+        ttk.Entry(kpi, textvariable=self.goal_current_var, width=12).pack(side="left", padx=4)
+        tb.Button(kpi, text="저장·계산", command=self._save_goal_dashboard, bootstyle="primary").pack(side="left", padx=8)
+        self.goal_summary_var = tk.StringVar()
+        ttk.Label(kpi, textvariable=self.goal_summary_var).pack(side="left", padx=8)
+
+        inner = ttk.Notebook(tab)
+        inner.pack(fill="both", expand=True, padx=10, pady=5)
+        strategy_tab = ttk.Frame(inner)
+        daily_tab = ttk.Frame(inner)
+        benchmark_tab = ttk.Frame(inner)
+        metrics_tab = ttk.Frame(inner)
+        inner.add(strategy_tab, text="타깃·채널 전략")
+        inner.add(daily_tab, text="오늘 실행")
+        inner.add(benchmark_tab, text="벤치마킹·대본")
+        inner.add(metrics_tab, text="채널 성과")
+
+        self.goal_category_var = tk.StringVar(value=self.goal_state["category"])
+        self.goal_persona_var = tk.StringVar(value=self.goal_state["persona"])
+        self.goal_tone_var = tk.StringVar(value=self.goal_state["tone"])
+        self.goal_keywords_var = tk.StringVar(value=self.goal_state["keywords"])
+        for row, label, variable in [
+            (0, "카테고리", self.goal_category_var),
+            (1, "핵심 타깃", self.goal_persona_var),
+            (2, "페르소나 말투", self.goal_tone_var),
+            (3, "핵심 키워드", self.goal_keywords_var),
+        ]:
+            ttk.Label(strategy_tab, text=label).grid(row=row, column=0, sticky="w", padx=10, pady=8)
+            ttk.Entry(strategy_tab, textvariable=variable).grid(row=row, column=1, sticky="ew", padx=10, pady=8)
+        strategy_tab.columnconfigure(1, weight=1)
+        ttk.Label(strategy_tab, text="채널 운영 원칙\nThreads: 확산·댓글 소통\nInstagram: 릴스·신뢰\nBlog: 검색·전환\n\n자동 댓글·자동 업로드 없이 수동 운영을 기록합니다.").grid(
+            row=4, column=0, columnspan=2, sticky="nw", padx=10, pady=12
+        )
+
+        daily = self.goal_state["daily"]
+        self.goal_daily_vars = {
+            key: tk.StringVar(value=str(daily.get(key, 0)))
+            for key in ("analyzed_posts", "scripts", "comments", "manual_uploads", "link_eligible_posts")
+        }
+        for row, (key, label) in enumerate([
+            ("analyzed_posts", "분석한 떡상 게시글 수 (목표 50)"),
+            ("scripts", "준비한 대본 수 (목표 5)"),
+            ("comments", "자연스러운 댓글 소통 수"),
+            ("manual_uploads", "수동 업로드 수"),
+            ("link_eligible_posts", "조회수 2,000 이상 링크 게시물 수"),
+        ]):
+            ttk.Label(daily_tab, text=label).grid(row=row, column=0, sticky="w", padx=10, pady=7)
+            ttk.Entry(daily_tab, textvariable=self.goal_daily_vars[key], width=10).grid(row=row, column=1, sticky="w", padx=10, pady=7)
+        self.goal_check_vars = {}
+        checks = ["추천탭 눈팅 완료", "관련 카테고리 검색 완료", "벤치마킹 계정 분석", "대본 5개 준비", "수동 업로드 기록", "수익·조회수 기록"]
+        check_frame = ttk.LabelFrame(daily_tab, text="오늘 체크리스트")
+        check_frame.grid(row=0, column=3, rowspan=6, sticky="nsew", padx=20, pady=8)
+        for index, label in enumerate(checks):
+            var = tk.BooleanVar(value=bool(daily.get("checklist", {}).get(label, False)))
+            self.goal_check_vars[label] = var
+            ttk.Checkbutton(check_frame, text=label, variable=var).pack(anchor="w", padx=10, pady=5)
+        daily_tab.columnconfigure(3, weight=1)
+
+        self.goal_benchmark_text = self._style_text_widget(scrolledtext.ScrolledText(benchmark_tab, height=8, wrap="word"))
+        self.goal_benchmark_text.pack(fill="both", expand=True, padx=10, pady=8)
+        self.goal_benchmark_text.insert("1.0", daily.get("benchmark_notes", ""))
+        ttk.Label(benchmark_tab, text="게시물 URL, 조회수, 후킹 문장, 구조, 댓글 반응을 기록하세요. 하루 50개 분석을 목표로 합니다.").pack(anchor="w", padx=10)
+        self.goal_scripts_text = self._style_text_widget(scrolledtext.ScrolledText(benchmark_tab, height=10, wrap="word"))
+        self.goal_scripts_text.pack(fill="both", expand=True, padx=10, pady=8)
+        self.goal_scripts_text.insert("1.0", daily.get("scripts_text", ""))
+        ttk.Label(benchmark_tab, text="대본 형식: 1) 후킹 2) 문제 3) 해결·상품 4) CTA 5) 채널별 변환 메모").pack(anchor="w", padx=10)
+
+        self.goal_channel_vars = {}
+        channels = self.goal_state["channels"]
+        for row, (channel, label) in enumerate([("threads", "Threads"), ("instagram", "Instagram"), ("blog", "Blog")]):
+            box = ttk.LabelFrame(metrics_tab, text=label)
+            box.grid(row=row, column=0, sticky="ew", padx=10, pady=6)
+            vars_for_channel = {}
+            for col, (key, text) in enumerate([("views", "조회수"), ("clicks", "클릭"), ("orders", "주문")]):
+                ttk.Label(box, text=text).grid(row=0, column=col * 2, padx=5, pady=5)
+                var = tk.StringVar(value=str(channels[channel].get(key, 0)))
+                vars_for_channel[key] = var
+                ttk.Entry(box, textvariable=var, width=10).grid(row=0, column=col * 2 + 1, padx=5, pady=5)
+            self.goal_channel_vars[channel] = vars_for_channel
+        metrics_tab.columnconfigure(0, weight=1)
+        self._save_goal_dashboard()
+
+    def _save_goal_dashboard(self):
+        from src.goal_tracker import calculate_summary, save_state
+
+        try:
+            self.goal_state["target_revenue"] = int(self.goal_target_var.get().replace(",", ""))
+            self.goal_state["current_revenue"] = int(self.goal_current_var.get().replace(",", ""))
+            for key, var in [
+                ("category", self.goal_category_var),
+                ("persona", self.goal_persona_var),
+                ("tone", self.goal_tone_var),
+                ("keywords", self.goal_keywords_var),
+            ]:
+                self.goal_state[key] = var.get().strip()
+            for key, var in self.goal_daily_vars.items():
+                self.goal_state["daily"][key] = int(var.get().replace(",", "") or 0)
+            self.goal_state["daily"]["checklist"] = {label: var.get() for label, var in self.goal_check_vars.items()}
+            self.goal_state["daily"]["benchmark_notes"] = self.goal_benchmark_text.get("1.0", tk.END).strip()
+            self.goal_state["daily"]["scripts_text"] = self.goal_scripts_text.get("1.0", tk.END).strip()
+            for channel, variables in self.goal_channel_vars.items():
+                for key, var in variables.items():
+                    self.goal_state["channels"][channel][key] = int(var.get().replace(",", "") or 0)
+            path = save_state(self.goal_state)
+            summary = calculate_summary(self.goal_state)
+            self.goal_summary_var.set(
+                f"진행률 {summary['progress']:.1f}% | 남은 금액 {summary['remaining']:,}원 | 오늘 분석 {summary['analyzed_posts']}/50 | 대본 {summary['scripts']}/5"
+            )
+            self.goal_status_var.set(f"저장됨: {path}")
+        except ValueError:
+            messagebox.showerror("입력 오류", "금액·수량 필드에는 숫자만 입력하세요.")
 
     def _mark_viewer_post_published(self):
         path = getattr(self, "_current_file_path", None)
