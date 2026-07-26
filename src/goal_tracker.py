@@ -9,6 +9,7 @@ STATE_PATH = Path("output") / "monthly_goal" / "goal_state.json"
 DEFAULT_STATE = {
     "target_revenue": 3_000_000,
     "current_revenue": 0,
+    "average_commission": 5000,
     "category": "생활용품·살림템",
     "persona": "25~44세 직장인 여성, 1~4인 가구",
     "tone": "실용적이고 솔직한 문제 해결형",
@@ -18,6 +19,7 @@ DEFAULT_STATE = {
         "instagram": {"role": "릴스·브랜드 신뢰", "views": 0, "clicks": 0, "orders": 0},
         "blog": {"role": "검색 유입·전환", "views": 0, "clicks": 0, "orders": 0},
     },
+    "posts": [],
     "daily": {
         "date": "",
         "analyzed_posts": 0,
@@ -70,5 +72,7 @@ def calculate_summary(state: dict) -> dict:
         "analyzed_posts": int(daily.get("analyzed_posts", 0)),
         "scripts": int(daily.get("scripts", 0)),
         "link_eligible_posts": int(daily.get("link_eligible_posts", 0)),
+        "orders_needed": max(0, (max(0, target - current) + max(1, int(state.get("average_commission", 1))) - 1) // max(1, int(state.get("average_commission", 1)))),
+        "tracked_posts": len(state.get("posts", [])),
         "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
     }

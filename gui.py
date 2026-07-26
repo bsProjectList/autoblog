@@ -453,10 +453,12 @@ class AutoBlogGUI(tb.Window):
         daily_tab = ttk.Frame(inner)
         benchmark_tab = ttk.Frame(inner)
         metrics_tab = ttk.Frame(inner)
+        posts_tab = ttk.Frame(inner)
         inner.add(strategy_tab, text="타깃·채널 전략")
         inner.add(daily_tab, text="오늘 실행")
         inner.add(benchmark_tab, text="벤치마킹·대본")
         inner.add(metrics_tab, text="채널 성과")
+        inner.add(posts_tab, text="게시물·링크 게이트")
 
         self.goal_category_var = tk.StringVar(value=self.goal_state["category"])
         self.goal_persona_var = tk.StringVar(value=self.goal_state["persona"])
@@ -521,6 +523,44 @@ class AutoBlogGUI(tb.Window):
                 ttk.Entry(box, textvariable=var, width=10).grid(row=0, column=col * 2 + 1, padx=5, pady=5)
             self.goal_channel_vars[channel] = vars_for_channel
         metrics_tab.columnconfigure(0, weight=1)
+        self.goal_avg_commission_var = tk.StringVar(value=str(self.goal_state.get("average_commission", 5000)))
+        calc_frame = ttk.Frame(posts_tab)
+        calc_frame.pack(fill="x", padx=10, pady=8)
+        ttk.Label(calc_frame, text="평균 주문 수수료(원)").pack(side="left")
+        ttk.Entry(calc_frame, textvariable=self.goal_avg_commission_var, width=10).pack(side="left", padx=5)
+        self.goal_orders_needed_var = tk.StringVar(value="")
+        ttk.Label(calc_frame, textvariable=self.goal_orders_needed_var).pack(side="left", padx=12)
+
+        form = ttk.LabelFrame(posts_tab, text="게시물 성과 기록")
+        form.pack(fill="x", padx=10, pady=5)
+        self.goal_post_channel_var = tk.StringVar(value="threads")
+        self.goal_post_title_var = tk.StringVar()
+        self.goal_post_url_var = tk.StringVar()
+        self.goal_post_views_var = tk.StringVar(value="0")
+        self.goal_post_clicks_var = tk.StringVar(value="0")
+        self.goal_post_orders_var = tk.StringVar(value="0")
+        self.goal_post_revenue_var = tk.StringVar(value="0")
+        self.goal_post_link_var = tk.BooleanVar(value=False)
+        ttk.Label(form, text="채널").grid(row=0, column=0, padx=4, pady=4)
+        ttk.Combobox(form, textvariable=self.goal_post_channel_var, values=("threads", "instagram", "blog"), width=12, state="readonly").grid(row=0, column=1, padx=4, pady=4)
+        ttk.Label(form, text="제목/메모").grid(row=0, column=2, padx=4, pady=4)
+        ttk.Entry(form, textvariable=self.goal_post_title_var, width=30).grid(row=0, column=3, padx=4, pady=4)
+        ttk.Label(form, text="URL").grid(row=0, column=4, padx=4, pady=4)
+        ttk.Entry(form, textvariable=self.goal_post_url_var, width=30).grid(row=0, column=5, padx=4, pady=4)
+        for col, (label, variable) in enumerate([
+            ("조회수", self.goal_post_views_var),
+            ("클릭", self.goal_post_clicks_var),
+            ("주문", self.goal_post_orders_var),
+            ("수익", self.goal_post_revenue_var),
+        ], start=0):
+            ttk.Label(form, text=label).grid(row=1, column=col * 2, padx=4, pady=4)
+            ttk.Entry(form, textvariable=variable, width=10).grid(row=1, column=col * 2 + 1, padx=4, pady=4)
+        ttk.Checkbutton(form, text="쿠팡 링크 삽입", variable=self.goal_post_link_var).grid(row=1, column=8, padx=8, pady=4)
+        tb.Button(form, text="게시물 저장", command=self._add_goal_post, bootstyle="success").grid(row=1, column=9, padx=5, pady=4)
+
+        self.goal_posts_list = self._style_listbox(tk.Listbox(posts_tab, height=12))
+        self.goal_posts_list.pack(fill="both", expand=True, padx=10, pady=8)
+        self._refresh_goal_posts()
         self._save_goal_dashboard()
 
     def _save_goal_dashboard(self):
@@ -529,6 +569,7 @@ class AutoBlogGUI(tb.Window):
         try:
             self.goal_state["target_revenue"] = int(self.goal_target_var.get().replace(",", ""))
             self.goal_state["current_revenue"] = int(self.goal_current_var.get().replace(",", ""))
+            self.goal_state["average_commission"] = int(self.goal_avg_commission_var.get().replace(",", "") or 0)
             for key, var in [
                 ("category", self.goal_category_var),
                 ("persona", self.goal_persona_var),
@@ -547,11 +588,59 @@ class AutoBlogGUI(tb.Window):
             path = save_state(self.goal_state)
             summary = calculate_summary(self.goal_state)
             self.goal_summary_var.set(
-                f"진행률 {summary['progress']:.1f}% | 남은 금액 {summary['remaining']:,}원 | 오늘 분석 {summary['analyzed_posts']}/50 | 대본 {summary['scripts']}/5"
+                f"진행률 {summary['progress']:.1f}% | 남은 금액 {summary['remaining']:,}원 | 필요 주문 {summary['orders_needed']:,}건 | 오늘 분석 {summary['analyzed_posts']}/50 | 대본 {summary['scripts']}/5"
             )
+            self.goal_orders_needed_var.set(f"현재 목표까지 약 {summary['orders_needed']:,}건 주문 필요")
             self.goal_status_var.set(f"저장됨: {path}")
         except ValueError:
             messagebox.showerror("입력 오류", "금액·수량 필드에는 숫자만 입력하세요.")
+
+    def _refresh_goal_posts(self):
+        if not hasattr(self, "goal_posts_list"):
+            return
+        self.goal_posts_list.delete(0, tk.END)
+        for item in self.goal_state.get("posts", []):
+            gate = "링크 허용" if item.get("link_added") else "링크 대기"
+            self.goal_posts_list.insert(
+                tk.END,
+                f"[{item.get('channel', '')}] {item.get('title', '')[:35]} | 조회 {item.get('views', 0):,} | 클릭 {item.get('clicks', 0):,} | 주문 {item.get('orders', 0):,} | 수익 {item.get('revenue', 0):,}원 | {gate}",
+            )
+
+    def _add_goal_post(self):
+        try:
+            views = int(self.goal_post_views_var.get().replace(",", "") or 0)
+            clicks = int(self.goal_post_clicks_var.get().replace(",", "") or 0)
+            orders = int(self.goal_post_orders_var.get().replace(",", "") or 0)
+            revenue = int(self.goal_post_revenue_var.get().replace(",", "") or 0)
+        except ValueError:
+            messagebox.showerror("입력 오류", "조회수·클릭·주문·수익은 숫자로 입력하세요.")
+            return
+        if self.goal_post_link_var.get() and views < 2000:
+            messagebox.showwarning("링크 삽입 보류", "조회수 2,000회 이상인 게시물에만 쿠팡 링크를 삽입할 수 있습니다.")
+            return
+        item = {
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "channel": self.goal_post_channel_var.get(),
+            "title": self.goal_post_title_var.get().strip() or "제목 없음",
+            "url": self.goal_post_url_var.get().strip(),
+            "views": views,
+            "clicks": clicks,
+            "orders": orders,
+            "revenue": revenue,
+            "link_added": bool(self.goal_post_link_var.get() and views >= 2000),
+        }
+        self.goal_state.setdefault("posts", []).append(item)
+        self.goal_state["current_revenue"] = sum(int(post.get("revenue", 0)) for post in self.goal_state["posts"])
+        self.goal_current_var.set(str(self.goal_state["current_revenue"]))
+        self._save_goal_dashboard()
+        self._refresh_goal_posts()
+        self.goal_post_title_var.set("")
+        self.goal_post_url_var.set("")
+        self.goal_post_views_var.set("0")
+        self.goal_post_clicks_var.set("0")
+        self.goal_post_orders_var.set("0")
+        self.goal_post_revenue_var.set("0")
+        self.goal_post_link_var.set(False)
 
     def _mark_viewer_post_published(self):
         path = getattr(self, "_current_file_path", None)
