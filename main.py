@@ -16,7 +16,7 @@ from src.models import BlogPost, NewsItem
 from src.seo_check import run_seo_check
 
 OUTPUT_DIR = Path("output")
-TOP_N = 6  # Groq 무료 티어 일일 토큰 한도(TPD 100K) 내에서 안전하게 처리 가능한 뉴스 개수
+TOP_N = 3  # 비용 절감을 위해 하루 3개 뉴스만 선정 (네이버·구글 생성 시 최대 6개 글)
 
 SEO_GENERATORS = [
     (generate_naver_post, "Naver SEO"),
