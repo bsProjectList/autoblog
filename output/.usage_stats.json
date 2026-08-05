@@ -138,5 +138,15 @@
       "tokens": 9747,
       "has_estimate": true
     }
+  },
+  "2026-08-05": {
+    "groq": {
+      "tokens": 16252,
+      "has_estimate": true
+    },
+    "openai": {
+      "tokens": 10450,
+      "has_estimate": true
+    }
   }
 }
