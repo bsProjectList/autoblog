@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
 from pathlib import Path
 from datetime import datetime
+from types import SimpleNamespace
 from dotenv import load_dotenv
 from PIL import Image, ImageTk
 import pyperclip
@@ -57,12 +58,9 @@ class AutoBlogGUI(tb.Window):
         notebook.add(self.pipeline_tab, text="파이프라인 실행")
 
         self._current_folder = None
-        self._current_post = None
         self._current_raw_content = None
         self._current_file_path = None
-        self._product_images = []
-        self._product_photos = []
-        self._product_reviews = []
+        self.affiliate_states = {}
         self._naver_writer_post = None
         self._tistory_writer_post = None
         self._naver_writer_last_path = None
@@ -82,7 +80,7 @@ class AutoBlogGUI(tb.Window):
         self._refresh_usage_bar()
 
     def _refresh_usage_bar(self):
-        from src.usage_tracker import get_today_usage
+        from src.usage_tracker import get_today_usage, get_cumulative_cost_usd, OPENAI_COST_PER_MILLION_TOKENS
         usage = get_today_usage()
         groq = usage.get("groq", {})
         openai_u = usage.get("openai", {})
@@ -92,14 +90,16 @@ class AutoBlogGUI(tb.Window):
         groq_est = "(일부 추정)" if groq.get("has_estimate") else ""
         openai_tokens = openai_u.get("tokens", 0)
         openai_est = "(일부 추정)" if openai_u.get("has_estimate") else ""
-        openai_cost = openai_tokens / 1_000_000 * 0.375
-        total_cost = openai_cost + image_cost
+        openai_cost = openai_tokens / 1_000_000 * OPENAI_COST_PER_MILLION_TOKENS
+        today_cost = openai_cost + image_cost
+        cumulative_cost = get_cumulative_cost_usd()
 
         self.groq_usage_progress["value"] = min(groq_tokens, 100000)
         self.usage_label_var.set(
             f"오늘 사용량 — Groq {groq_tokens:,}/100,000 토큰{groq_est}  |  "
             f"OpenAI {openai_tokens:,} 토큰{openai_est} (약 ${openai_cost:.3f})  |  "
-            f"이미지 ${image_cost:.2f}  |  총 예상 비용 약 ${total_cost:.3f}"
+            f"이미지 ${image_cost:.2f}  |  오늘 예상 비용 약 ${today_cost:.3f}  |  "
+            f"누적 총 예상 비용 약 ${cumulative_cost:.3f}"
         )
 
     # ---------------- 테마 헬퍼 ----------------
@@ -740,155 +740,190 @@ class AutoBlogGUI(tb.Window):
                 self.content_text.insert(tk.END, line[pos:] + "\n")
 
     # ---------------- 제휴 글 생성 ----------------
+    AFFILIATE_PLATFORMS = [
+        ("naver", "네이버 커넥트", False),
+        ("coupang", "쿠팡 파트너스", True),
+        ("toss", "토스 쇼핑", False),
+    ]
+
     def _build_affiliate_tab(self):
-        coupang_box = ttk.LabelFrame(self.affiliate_tab, text="쿠팡 상품 검색 (Open API — 크롤링 차단 없음)")
-        coupang_box.pack(fill="x", padx=10, pady=(10, 0))
+        inner = ttk.Notebook(self.affiliate_tab)
+        inner.pack(fill="both", expand=True)
 
-        search_row = ttk.Frame(coupang_box)
-        search_row.pack(fill="x", padx=5, pady=5)
-        ttk.Label(search_row, text="키워드:").pack(side="left")
-        self.coupang_keyword_entry = ttk.Entry(search_row)
-        self.coupang_keyword_entry.pack(side="left", fill="x", expand=True, padx=5)
-        tb.Button(search_row, text="검색", command=self._search_coupang, bootstyle="primary").pack(side="left")
+        for kind, label, show_coupang_search in self.AFFILIATE_PLATFORMS:
+            tab = ttk.Frame(inner)
+            inner.add(tab, text=label)
+            self.affiliate_states[kind] = self._build_affiliate_platform_tab(tab, kind, label, show_coupang_search)
 
-        self.coupang_result_list = self._style_listbox(tk.Listbox(coupang_box, height=5))
-        self.coupang_result_list.pack(fill="x", padx=5, pady=(0, 5))
-        self.coupang_result_list.bind("<<ListboxSelect>>", self._on_coupang_result_select)
-        self._coupang_results = []
-
-        top = ttk.Frame(self.affiliate_tab)
-        top.pack(fill="x", padx=10, pady=10)
-
-        ttk.Label(top, text="상품 URL (네이버 커넥트 / 쿠팡 파트너스 / 토스 쇼핑):").pack(anchor="w")
-        url_row = ttk.Frame(top)
-        url_row.pack(fill="x", pady=5)
-        self.url_entry = ttk.Entry(url_row)
-        self.url_entry.pack(side="left", fill="x", expand=True)
-        tb.Button(url_row, text="정보 가져오기", command=self._fetch_product, bootstyle="primary").pack(side="left", padx=5)
-        tb.Button(url_row, text="클립보드에서 붙여넣기", command=self._paste_from_clipboard, bootstyle="secondary").pack(
-            side="left", padx=5
+    def _build_affiliate_platform_tab(self, parent, kind, platform_label, show_coupang_search):
+        ns = SimpleNamespace(
+            kind=kind,
+            platform_label=platform_label,
+            product_images=[],
+            product_photos=[],
+            product_reviews=[],
+            coupang_results=[],
+            current_post=None,
         )
 
-        info = ttk.LabelFrame(self.affiliate_tab, text="상품 정보 (자동 수집 실패 시 직접 입력)")
+        if show_coupang_search:
+            coupang_box = ttk.LabelFrame(parent, text="쿠팡 상품 검색 (Open API — 크롤링 차단 없음)")
+            coupang_box.pack(fill="x", padx=10, pady=(10, 0))
+
+            search_row = ttk.Frame(coupang_box)
+            search_row.pack(fill="x", padx=5, pady=5)
+            ttk.Label(search_row, text="키워드:").pack(side="left")
+            ns.coupang_keyword_entry = ttk.Entry(search_row)
+            ns.coupang_keyword_entry.pack(side="left", fill="x", expand=True, padx=5)
+            tb.Button(search_row, text="검색", command=lambda: self._search_coupang(ns), bootstyle="primary").pack(
+                side="left"
+            )
+
+            ns.coupang_result_list = self._style_listbox(tk.Listbox(coupang_box, height=5))
+            ns.coupang_result_list.pack(fill="x", padx=5, pady=(0, 5))
+            ns.coupang_result_list.bind("<<ListboxSelect>>", lambda _e: self._on_coupang_result_select(ns))
+
+        top = ttk.Frame(parent)
+        top.pack(fill="x", padx=10, pady=10)
+
+        ttk.Label(top, text=f"상품 URL ({platform_label}):").pack(anchor="w")
+        url_row = ttk.Frame(top)
+        url_row.pack(fill="x", pady=5)
+        ns.url_entry = ttk.Entry(url_row)
+        ns.url_entry.pack(side="left", fill="x", expand=True)
+        tb.Button(url_row, text="정보 가져오기", command=lambda: self._fetch_product(ns), bootstyle="primary").pack(
+            side="left", padx=5
+        )
+        tb.Button(
+            url_row, text="클립보드에서 붙여넣기", command=lambda: self._paste_from_clipboard(ns), bootstyle="secondary"
+        ).pack(side="left", padx=5)
+
+        info = ttk.LabelFrame(parent, text="상품 정보 (자동 수집 실패 시 직접 입력)")
         info.pack(fill="x", padx=10, pady=5)
         info.columnconfigure(1, weight=1)
 
         ttk.Label(info, text="플랫폼:").grid(row=0, column=0, sticky="w", padx=5, pady=3)
-        self.platform_var = tk.StringVar()
-        ttk.Entry(info, textvariable=self.platform_var).grid(row=0, column=1, sticky="ew", padx=5, pady=3)
+        ns.platform_var = tk.StringVar(value=platform_label)
+        ttk.Entry(info, textvariable=ns.platform_var).grid(row=0, column=1, sticky="ew", padx=5, pady=3)
 
         ttk.Label(info, text="상품명:").grid(row=1, column=0, sticky="w", padx=5, pady=3)
-        self.name_var = tk.StringVar()
-        ttk.Entry(info, textvariable=self.name_var).grid(row=1, column=1, sticky="ew", padx=5, pady=3)
+        ns.name_var = tk.StringVar()
+        ttk.Entry(info, textvariable=ns.name_var).grid(row=1, column=1, sticky="ew", padx=5, pady=3)
 
         ttk.Label(info, text="가격:").grid(row=2, column=0, sticky="w", padx=5, pady=3)
-        self.price_var = tk.StringVar()
-        ttk.Entry(info, textvariable=self.price_var).grid(row=2, column=1, sticky="ew", padx=5, pady=3)
+        ns.price_var = tk.StringVar()
+        ttk.Entry(info, textvariable=ns.price_var).grid(row=2, column=1, sticky="ew", padx=5, pady=3)
 
         ttk.Label(info, text="설명:").grid(row=3, column=0, sticky="nw", padx=5, pady=3)
-        self.desc_text = self._style_text_widget(tk.Text(info, height=3))
-        self.desc_text.grid(row=3, column=1, sticky="ew", padx=5, pady=3)
+        ns.desc_text = self._style_text_widget(tk.Text(info, height=3))
+        ns.desc_text.grid(row=3, column=1, sticky="ew", padx=5, pady=3)
 
-        image_box = ttk.LabelFrame(self.affiliate_tab, text="상품 이미지")
+        image_box = ttk.LabelFrame(parent, text="상품 이미지")
         image_box.pack(fill="x", padx=10, pady=(0, 5))
-        self.image_canvas = tk.Canvas(image_box, height=140, highlightthickness=0, bg=self.colors.bg)
-        image_scrollbar = ttk.Scrollbar(image_box, orient="horizontal", command=self.image_canvas.xview)
-        self.image_canvas.configure(xscrollcommand=image_scrollbar.set)
-        self.image_canvas.pack(fill="x", padx=5, pady=(5, 0))
+        ns.image_canvas = tk.Canvas(image_box, height=140, highlightthickness=0, bg=self.colors.bg)
+        image_scrollbar = ttk.Scrollbar(image_box, orient="horizontal", command=ns.image_canvas.xview)
+        ns.image_canvas.configure(xscrollcommand=image_scrollbar.set)
+        ns.image_canvas.pack(fill="x", padx=5, pady=(5, 0))
         image_scrollbar.pack(fill="x", padx=5, pady=(0, 5))
 
-        self.image_preview_frame = ttk.Frame(self.image_canvas)
-        self.image_canvas.create_window((0, 0), window=self.image_preview_frame, anchor="nw")
-        self.image_preview_frame.bind(
+        ns.image_preview_frame = ttk.Frame(ns.image_canvas)
+        ns.image_canvas.create_window((0, 0), window=ns.image_preview_frame, anchor="nw")
+        ns.image_preview_frame.bind(
             "<Configure>",
-            lambda _e: self.image_canvas.configure(scrollregion=self.image_canvas.bbox("all")),
+            lambda _e, canvas=ns.image_canvas: canvas.configure(scrollregion=canvas.bbox("all")),
         )
 
-        self.image_placeholder_label = ttk.Label(self.image_preview_frame, text="(이미지 없음)")
-        self.image_placeholder_label.pack(side="left")
+        ns.image_placeholder_label = ttk.Label(ns.image_preview_frame, text="(이미지 없음)")
+        ns.image_placeholder_label.pack(side="left")
 
-        btn_frame = ttk.Frame(self.affiliate_tab)
+        btn_frame = ttk.Frame(parent)
         btn_frame.pack(fill="x", padx=10, pady=5)
-        self.generate_btn = tb.Button(btn_frame, text="글 생성", command=self._generate_post, bootstyle="primary")
-        self.generate_btn.pack(side="left")
-        self.save_btn = tb.Button(btn_frame, text="저장", command=self._save_post, state="disabled", bootstyle="success")
-        self.save_btn.pack(side="left", padx=5)
+        ns.generate_btn = tb.Button(
+            btn_frame, text="글 생성", command=lambda: self._generate_post(ns), bootstyle="primary"
+        )
+        ns.generate_btn.pack(side="left")
+        ns.save_btn = tb.Button(
+            btn_frame, text="저장", command=lambda: self._save_post(ns), state="disabled", bootstyle="success"
+        )
+        ns.save_btn.pack(side="left", padx=5)
 
-        self.status_var = tk.StringVar(value="대기 중")
-        ttk.Label(self.affiliate_tab, textvariable=self.status_var).pack(anchor="w", padx=10)
-        self.progress = ttk.Progressbar(self.affiliate_tab, mode="indeterminate")
-        self.progress.pack(fill="x", padx=10, pady=(0, 5))
+        ns.status_var = tk.StringVar(value="대기 중")
+        ttk.Label(parent, textvariable=ns.status_var).pack(anchor="w", padx=10)
+        ns.progress = ttk.Progressbar(parent, mode="indeterminate")
+        ns.progress.pack(fill="x", padx=10, pady=(0, 5))
 
-        self.result_text = self._style_text_widget(scrolledtext.ScrolledText(self.affiliate_tab, wrap="word", height=18))
-        self.result_text.pack(fill="both", expand=True, padx=10, pady=5)
+        ns.result_text = self._style_text_widget(scrolledtext.ScrolledText(parent, wrap="word", height=18))
+        ns.result_text.pack(fill="both", expand=True, padx=10, pady=5)
 
-    def _search_coupang(self):
-        keyword = self.coupang_keyword_entry.get().strip()
+        return ns
+
+    def _search_coupang(self, ns):
+        keyword = ns.coupang_keyword_entry.get().strip()
         if not keyword:
             messagebox.showwarning("알림", "검색어를 입력하세요.")
             return
 
-        self.status_var.set("쿠팡 상품 검색 중...")
-        self.progress.start(10)
+        ns.status_var.set("쿠팡 상품 검색 중...")
+        ns.progress.start(10)
 
         def task():
             try:
                 from src.collector.coupang_api import search_products
                 products = search_products(keyword, limit=5)
-                self.after(0, lambda: self._on_coupang_search_done(products, None))
+                self.after(0, lambda: self._on_coupang_search_done(ns, products, None))
             except Exception as e:
-                self.after(0, lambda error=e: self._on_coupang_search_done(None, error))
+                self.after(0, lambda error=e: self._on_coupang_search_done(ns, None, error))
 
         threading.Thread(target=task, daemon=True).start()
 
-    def _on_coupang_search_done(self, products, error):
-        self.progress.stop()
+    def _on_coupang_search_done(self, ns, products, error):
+        ns.progress.stop()
         if error:
-            self.status_var.set(f"쿠팡 검색 실패: {error}")
+            ns.status_var.set(f"쿠팡 검색 실패: {error}")
             messagebox.showerror("오류", str(error))
             return
 
-        self._coupang_results = products or []
-        self.coupang_result_list.delete(0, tk.END)
-        for p in self._coupang_results:
-            self.coupang_result_list.insert(tk.END, f"{p['title'][:45]} - {p['price']}")
+        ns.coupang_results = products or []
+        ns.coupang_result_list.delete(0, tk.END)
+        for p in ns.coupang_results:
+            ns.coupang_result_list.insert(tk.END, f"{p['title'][:45]} - {p['price']}")
 
-        if not self._coupang_results:
-            self.status_var.set("검색 결과가 없습니다.")
+        if not ns.coupang_results:
+            ns.status_var.set("검색 결과가 없습니다.")
         else:
-            self.status_var.set(f"{len(self._coupang_results)}개 검색됨. 목록에서 선택하세요.")
+            ns.status_var.set(f"{len(ns.coupang_results)}개 검색됨. 목록에서 선택하세요.")
 
-    def _on_coupang_result_select(self, _event):
-        sel = self.coupang_result_list.curselection()
+    def _on_coupang_result_select(self, ns):
+        sel = ns.coupang_result_list.curselection()
         if not sel:
             return
-        product = self._coupang_results[sel[0]]
+        product = ns.coupang_results[sel[0]]
 
-        self.url_entry.delete(0, tk.END)
-        self.url_entry.insert(0, product["product_url"])
-        self.platform_var.set("쿠팡 파트너스")
-        self.name_var.set(product["title"])
-        self.price_var.set(product["price"])
-        self.desc_text.delete("1.0", tk.END)
-        self.desc_text.insert("1.0", product["description"])
-        self._product_reviews = []
+        ns.url_entry.delete(0, tk.END)
+        ns.url_entry.insert(0, product["product_url"])
+        ns.platform_var.set("쿠팡 파트너스")
+        ns.name_var.set(product["title"])
+        ns.price_var.set(product["price"])
+        ns.desc_text.delete("1.0", tk.END)
+        ns.desc_text.insert("1.0", product["description"])
+        ns.product_reviews = []
 
-        self.status_var.set("상품 이미지 다운로드 중...")
-        self.progress.start(10)
+        ns.status_var.set("상품 이미지 다운로드 중...")
+        ns.progress.start(10)
 
         def task():
             from src.collector.product_crawler import download_images
             images = download_images([product["image_url"]], min_count=1)
-            self.after(0, lambda: self._on_coupang_image_done(images))
+            self.after(0, lambda: self._on_coupang_image_done(ns, images))
 
         threading.Thread(target=task, daemon=True).start()
 
-    def _on_coupang_image_done(self, images):
-        self.progress.stop()
-        self._show_product_images(images)
-        self.status_var.set("쿠팡 상품 정보를 가져왔습니다. 필요시 수정 후 '글 생성'을 누르세요.")
+    def _on_coupang_image_done(self, ns, images):
+        ns.progress.stop()
+        self._show_product_images(ns, images)
+        ns.status_var.set("쿠팡 상품 정보를 가져왔습니다. 필요시 수정 후 '글 생성'을 누르세요.")
 
-    def _paste_from_clipboard(self):
+    def _paste_from_clipboard(self, ns):
         try:
             raw = pyperclip.paste()
             data = json.loads(raw)
@@ -911,10 +946,10 @@ class AutoBlogGUI(tb.Window):
             "price": data.get("price", ""),
             "description": data.get("description", ""),
         }
-        self._product_reviews = data.get("reviews", [])
+        ns.product_reviews = data.get("reviews", [])
 
-        self.status_var.set("클립보드에서 정보를 가져왔습니다. 처리 중...")
-        self.progress.start(10)
+        ns.status_var.set("클립보드에서 정보를 가져왔습니다. 처리 중...")
+        ns.progress.start(10)
 
         def task():
             final_url = url
@@ -927,22 +962,22 @@ class AutoBlogGUI(tb.Window):
 
             from src.collector.product_crawler import download_images
             images = download_images(data.get("image_urls", []), min_count=3)
-            self.after(0, lambda: self._on_paste_done(result, images, final_url, final_url != url))
+            self.after(0, lambda: self._on_paste_done(ns, result, images, final_url, final_url != url))
 
         threading.Thread(target=task, daemon=True).start()
 
-    def _on_paste_done(self, result, images, final_url, was_converted):
-        self.url_entry.delete(0, tk.END)
-        self.url_entry.insert(0, final_url)
-        self._on_fetch_done(result, images)
+    def _on_paste_done(self, ns, result, images, final_url, was_converted):
+        ns.url_entry.delete(0, tk.END)
+        ns.url_entry.insert(0, final_url)
+        self._on_fetch_done(ns, result, images)
         if result["platform"] == "쿠팡 파트너스":
             if was_converted:
-                self.status_var.set("쿠팡 URL을 파트너스 제휴 링크로 자동 변환했습니다. " + self.status_var.get())
+                ns.status_var.set("쿠팡 URL을 파트너스 제휴 링크로 자동 변환했습니다. " + ns.status_var.get())
             else:
-                self.status_var.set("⚠ 제휴 링크 변환 실패 — 원본 URL이 남아있어 수수료가 안 붙을 수 있습니다.")
+                ns.status_var.set("⚠ 제휴 링크 변환 실패 — 원본 URL이 남아있어 수수료가 안 붙을 수 있습니다.")
 
-    def _fetch_product(self):
-        url = self.url_entry.get().strip()
+    def _fetch_product(self, ns):
+        url = ns.url_entry.get().strip()
         if not url:
             messagebox.showwarning("알림", "URL을 입력하세요.")
             return
@@ -952,65 +987,65 @@ class AutoBlogGUI(tb.Window):
             messagebox.showwarning(
                 "쿠팡은 검색으로",
                 "쿠팡은 URL 크롤링이 차단되어 있어 여기로는 정보를 못 가져옵니다.\n"
-                "위쪽 '쿠팡 상품 검색' 박스에 키워드를 입력해서 검색해주세요.",
+                "'쿠팡 파트너스' 탭의 '쿠팡 상품 검색' 박스에 키워드를 입력해서 검색해주세요.",
             )
             return
 
-        self.status_var.set("상품 정보 가져오는 중...")
-        self.progress.start(10)
-        self._product_images = []
-        self._product_reviews = []
-        self._clear_image_preview()
+        ns.status_var.set("상품 정보 가져오는 중...")
+        ns.progress.start(10)
+        ns.product_images = []
+        ns.product_reviews = []
+        self._clear_image_preview(ns)
 
         def task():
             from src.collector.product_crawler import crawl_product_page, download_images
             result = crawl_product_page(url)
             images = download_images(result.get("image_urls", []), min_count=3)
-            self.after(0, lambda: self._on_fetch_done(result, images))
+            self.after(0, lambda: self._on_fetch_done(ns, result, images))
 
         threading.Thread(target=task, daemon=True).start()
 
-    def _clear_image_preview(self):
-        for widget in self.image_preview_frame.winfo_children():
+    def _clear_image_preview(self, ns):
+        for widget in ns.image_preview_frame.winfo_children():
             widget.destroy()
-        self._product_photos = []
-        self.image_placeholder_label = ttk.Label(self.image_preview_frame, text="(이미지 없음)")
-        self.image_placeholder_label.pack(side="left")
+        ns.product_photos = []
+        ns.image_placeholder_label = ttk.Label(ns.image_preview_frame, text="(이미지 없음)")
+        ns.image_placeholder_label.pack(side="left")
 
-    def _show_product_images(self, images):
-        self._product_images = images
-        self._clear_image_preview()
+    def _show_product_images(self, ns, images):
+        ns.product_images = images
+        self._clear_image_preview(ns)
         if images:
-            self.image_placeholder_label.pack_forget()
+            ns.image_placeholder_label.pack_forget()
             for data, _ext in images:
                 try:
                     pil_image = Image.open(io.BytesIO(data))
                     pil_image.thumbnail((120, 120))
                     photo = ImageTk.PhotoImage(pil_image)
-                    self._product_photos.append(photo)
-                    ttk.Label(self.image_preview_frame, image=photo).pack(side="left", padx=3)
+                    ns.product_photos.append(photo)
+                    ttk.Label(ns.image_preview_frame, image=photo).pack(side="left", padx=3)
                 except Exception:
                     continue
 
-    def _on_fetch_done(self, result, images):
-        self.progress.stop()
-        self.platform_var.set(result.get("platform", ""))
-        self.name_var.set(result.get("title", ""))
-        self.price_var.set(result.get("price", ""))
-        self.desc_text.delete("1.0", tk.END)
-        self.desc_text.insert("1.0", result.get("description", ""))
+    def _on_fetch_done(self, ns, result, images):
+        ns.progress.stop()
+        ns.platform_var.set(result.get("platform", ""))
+        ns.name_var.set(result.get("title", ""))
+        ns.price_var.set(result.get("price", ""))
+        ns.desc_text.delete("1.0", tk.END)
+        ns.desc_text.insert("1.0", result.get("description", ""))
 
-        self._show_product_images(images)
+        self._show_product_images(ns, images)
 
         if result.get("error"):
-            self.status_var.set(f"일부 정보를 가져오지 못했습니다 ({result['error'][:60]}). 직접 입력 후 진행하세요.")
+            ns.status_var.set(f"일부 정보를 가져오지 못했습니다 ({result['error'][:60]}). 직접 입력 후 진행하세요.")
         elif len(images) < 3:
-            self.status_var.set(f"이미지 {len(images)}개만 확보됨(목표 3개+). 필요시 수정 후 '글 생성'을 누르세요.")
+            ns.status_var.set(f"이미지 {len(images)}개만 확보됨(목표 3개+). 필요시 수정 후 '글 생성'을 누르세요.")
         else:
-            self.status_var.set(f"정보와 이미지 {len(images)}개를 가져왔습니다. 필요시 수정 후 '글 생성'을 누르세요.")
+            ns.status_var.set(f"정보와 이미지 {len(images)}개를 가져왔습니다. 필요시 수정 후 '글 생성'을 누르세요.")
 
-    def _generate_post(self):
-        url = self.url_entry.get().strip()
+    def _generate_post(self, ns):
+        url = ns.url_entry.get().strip()
         if not url:
             messagebox.showwarning("알림", "URL을 입력하세요.")
             return
@@ -1019,62 +1054,62 @@ class AutoBlogGUI(tb.Window):
             return
 
         product = {
-            "platform": self.platform_var.get().strip(),
-            "title": self.name_var.get().strip(),
-            "price": self.price_var.get().strip(),
-            "description": self.desc_text.get("1.0", tk.END).strip(),
-            "reviews": self._product_reviews,
+            "platform": ns.platform_var.get().strip(),
+            "title": ns.name_var.get().strip(),
+            "price": ns.price_var.get().strip(),
+            "description": ns.desc_text.get("1.0", tk.END).strip(),
+            "reviews": ns.product_reviews,
         }
 
-        image_count = len(self._product_images)
+        image_count = len(ns.product_images)
 
-        self.status_var.set("블로그 글 생성 중... (AI 호출)")
-        self.progress.start(10)
-        self.generate_btn.config(state="disabled")
+        ns.status_var.set("블로그 글 생성 중... (AI 호출)")
+        ns.progress.start(10)
+        ns.generate_btn.config(state="disabled")
 
         def task():
             try:
                 from src.generator.affiliate import generate_affiliate_post
                 post = generate_affiliate_post(url, product, image_count=image_count)
-                self.after(0, lambda: self._on_generate_done(post, None))
+                self.after(0, lambda: self._on_generate_done(ns, post, None))
             except Exception as e:
-                self.after(0, lambda error=e: self._on_generate_done(None, error))
+                self.after(0, lambda error=e: self._on_generate_done(ns, None, error))
 
         threading.Thread(target=task, daemon=True).start()
 
-    def _on_generate_done(self, post, error):
-        self.progress.stop()
-        self.generate_btn.config(state="normal")
+    def _on_generate_done(self, ns, post, error):
+        ns.progress.stop()
+        ns.generate_btn.config(state="normal")
         if error:
-            self.status_var.set(f"생성 실패: {error}")
+            ns.status_var.set(f"생성 실패: {error}")
             messagebox.showerror("오류", str(error))
             return
-        self._current_post = post
-        self.result_text.delete("1.0", tk.END)
-        self.result_text.insert("1.0", post.content)
-        self.status_var.set("생성 완료. '저장'을 눌러 파일로 저장하세요.")
-        self.save_btn.config(state="normal")
+        ns.current_post = post
+        ns.result_text.delete("1.0", tk.END)
+        ns.result_text.insert("1.0", post.content)
+        ns.status_var.set("생성 완료. '저장'을 눌러 파일로 저장하세요.")
+        ns.save_btn.config(state="normal")
         self._refresh_usage_bar()
 
-    def _save_post(self):
-        if not self._current_post:
+    def _save_post(self, ns):
+        if not ns.current_post:
             return
         date_str = datetime.now().strftime("%Y-%m-%d")
         date_folder = AFFILIATE_DIR / date_str
         date_folder.mkdir(parents=True, exist_ok=True)
 
-        slug = self._current_post.news_item.slug or "affiliate"
+        slug = ns.current_post.news_item.slug or "affiliate"
         existing = [d for d in date_folder.glob(f"{slug}_*") if d.is_dir()]
         suffix = f"{len(existing) + 1:02d}"
         post_folder = date_folder / f"{slug}_{suffix}"
         post_folder.mkdir(parents=True, exist_ok=True)
 
-        content = self.result_text.get("1.0", tk.END).strip() + "\n"
+        content = ns.result_text.get("1.0", tk.END).strip() + "\n"
 
-        if self._product_images:
-            product_name = self.name_var.get().strip() or "상품 이미지"
+        if ns.product_images:
+            product_name = ns.name_var.get().strip() or "상품 이미지"
             image_filenames = []
-            for idx, (data, ext) in enumerate(self._product_images, start=1):
+            for idx, (data, ext) in enumerate(ns.product_images, start=1):
                 image_filename = f"image_{idx:02d}{ext}"
                 (post_folder / image_filename).write_bytes(data)
                 image_filenames.append(image_filename)
@@ -1103,7 +1138,7 @@ class AutoBlogGUI(tb.Window):
         path = post_folder / "post.md"
         path.write_text(content, encoding="utf-8")
 
-        self.status_var.set(f"저장됨: {path}")
+        ns.status_var.set(f"저장됨: {path}")
         messagebox.showinfo("저장 완료", str(path))
         self._refresh_dates()
 

@@ -8,6 +8,9 @@ from typing import Dict
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 USAGE_FILE = PROJECT_ROOT / "output" / ".usage_stats.json"
 
+# gpt-4o-mini blended $/1M tokens, used when Groq's free tier is exhausted and requests fall back to OpenAI.
+OPENAI_COST_PER_MILLION_TOKENS = 0.375
+
 
 def _load() -> Dict:
     if USAGE_FILE.exists():
@@ -38,6 +41,13 @@ def record_usage(provider: str, tokens: int, estimated: bool = False) -> None:
 def get_today_usage() -> Dict:
     date_str = datetime.now().strftime("%Y-%m-%d")
     return _load().get(date_str, {})
+
+
+def get_cumulative_cost_usd() -> float:
+    data = _load()
+    total_openai_tokens = sum(day.get("openai", {}).get("tokens", 0) for day in data.values())
+    total_image_cost = sum(day.get("image_cost_usd", 0.0) for day in data.values())
+    return total_openai_tokens / 1_000_000 * OPENAI_COST_PER_MILLION_TOKENS + total_image_cost
 
 
 def get_today_tokens(provider: str) -> int:
