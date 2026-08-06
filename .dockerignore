@@ -1,0 +1,9 @@
+.git
+__pycache__
+*.pyc
+.env
+env
+.streamlit_run*.log
+.streamlit_run*.err.log
+output/
+.pytest_cache
