@@ -1,0 +1,260 @@
+[
+  {
+    "file": "output/2026-08-07/01_yeonhab-joongang-10-30_naver.md",
+    "title": "서울·경기·충북 선관위 통계조작 수사 확대, 경제에 미칠 영향은?",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "36자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2776자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-08-07/01_yeonhab-joongang-10-30_google.md",
+    "title": "통계조작 사건: 서울·경기·충북 선거관리위원회 압수수색",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "30자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "warn",
+        "detail": "86자 — 권장 100~160자."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "warn",
+        "detail": "9개 — 10개 이상 권장."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2001자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-08-07/02_gu-yoon-cheol-bu-chong-li_naver.md",
+    "title": "2026 레드닷 어워드에서 현대차·기아의 대성공, 브랜드 경험과 디자인 경쟁력",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "43자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "11개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2532자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "warn",
+        "detail": "500자 넘는 긴 문단 1개 발견 — 문단을 더 짧게 나누는 걸 권장."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-08-07/02_gu-yoon-cheol-bu-chong-li_google.md",
+    "title": "현대차·기아, ‘2026 레드닷 어워드’에서 총 17개 상 수상",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "35자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "warn",
+        "detail": "59자 — 권장 100~160자."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "19개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2663자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-08-07/03_mapo-gu-nogo-san-dong_naver.md",
+    "title": "마포구 노고산동, 재개발 통해 새로운 중심지로 거듭난다",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "30자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "23개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "pass",
+        "detail": "약 3101자."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "warn",
+        "detail": "500자 넘는 긴 문단 1개 발견 — 문단을 더 짧게 나누는 걸 권장."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-08-07/03_mapo-gu-nogo-san-dong_google.md",
+    "title": "마포구 노고산동에 42층 주거·업무시설…재개발 통합심의 통과",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "33자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "warn",
+        "detail": "73자 — 권장 100~160자."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2843자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  }
+]
