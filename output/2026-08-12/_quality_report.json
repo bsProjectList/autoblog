@@ -1,0 +1,260 @@
+[
+  {
+    "file": "output/2026-08-12/01_7-취업자-10만8천명-증가_naver.md",
+    "title": "7월 취업자 10만8천명 증가…청년실업률 5년반만에 최대폭↑: 취업자, 청년실업률, 고용률 분석",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "53자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "11개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2756자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "warn",
+        "detail": "500자 넘는 긴 문단 1개 발견 — 문단을 더 짧게 나누는 걸 권장."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-08-12/01_7-취업자-10만8천명-증가_google.md",
+    "title": "7월 취업자 증가와 청년실업률 상승: 경제적 의미와 전망",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "31자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "pass",
+        "detail": "104자 — 적절합니다."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "warn",
+        "detail": "7개 — 10개 이상 권장."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2324자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-08-12/02_미-7월-주택거래-감소_naver.md",
+    "title": "미국 주택거래 감소와 대출금리 상승: 미래는 어떨까?",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "29자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2510자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-08-12/02_미-7월-주택거래-감소_google.md",
+    "title": "미 7월 주택거래 감소…대출금리 상승 영향",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "23자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "pass",
+        "detail": "139자 — 적절합니다."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "warn",
+        "detail": "9개 — 10개 이상 권장."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2507자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-08-12/03_대학가-원룸-임대료-급등_naver.md",
+    "title": "대학가 원룸 임대료 급등, 학생들의 고심은 어디로",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "27자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "15개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2095자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-08-12/03_대학가-원룸-임대료-급등_google.md",
+    "title": "개강 앞둔 대학가, 원룸 임대료 급등… 월세·관리비 평균 71만원",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "36자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "warn",
+        "detail": "78자 — 권장 100~160자."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2733자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  }
+]
