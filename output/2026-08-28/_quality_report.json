@@ -1,0 +1,260 @@
+[
+  {
+    "file": "output/2026-08-28/01_sk-hynix-hbm-production-us_naver.md",
+    "title": "SK하이닉스, 미국에서 HBM 생산 시작! 그 의미와 영향은?",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "34자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2706자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-08-28/01_sk-hynix-hbm-production-us_google.md",
+    "title": "SK하이닉스, 미국에서 HBM 생산 시작",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "22자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "warn",
+        "detail": "82자 — 권장 100~160자."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2845자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-08-28/02_interest-rate-increase-korea_naver.md",
+    "title": "물가와 집값 잡는다! 두 달 연속 오른 기준금리의 의미",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "30자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2571자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-08-28/02_interest-rate-increase-korea_google.md",
+    "title": "\"물가·집값 잡는다\" 두 달 연속 오른 기준금리",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "26자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "warn",
+        "detail": "68자 — 권장 100~160자."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2911자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-08-28/03_real-estate-surge-seoul_naver.md",
+    "title": "\"집 살게요\" 우르르, 서울 외곽 아파트 거래 대폭 증대",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "31자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2748자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-08-28/03_real-estate-surge-seoul_google.md",
+    "title": "집 살게요 우르르, 이런 난리 9년만 처음...부동산도 화들짝 놀란 '이 동네'",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "44자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "warn",
+        "detail": "62자 — 권장 100~160자."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2630자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  }
+]
