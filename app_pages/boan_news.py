@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 from zoneinfo import ZoneInfo
 
 import streamlit as st
@@ -18,6 +19,14 @@ def load_today_news():
 @st.cache_data(ttl=86400, show_spinner=False)
 def load_article(url: str) -> str:
     return fetch_article_text(url, max_chars=20000)
+
+
+def render_article_body(content: str) -> None:
+    """문단과 원문 줄바꿈을 Streamlit 블록으로 분리해 가독성을 유지한다."""
+    blocks = [re.sub(r"[ \t]+", " ", block).strip() for block in re.split(r"\n{2,}", content)]
+    for block in blocks:
+        if block:
+            st.markdown(block.replace("\n", "  \n"))
 
 
 st.title("보안뉴스")
@@ -59,6 +68,7 @@ for tab, (category, items) in zip(category_tabs, categories.items()):
         if article_text:
             st.divider()
             st.markdown("### 기사 본문")
-            st.markdown(article_text)
+            with st.container(border=True):
+                render_article_body(article_text)
         else:
             st.info("본문을 가져오지 못했습니다. 원문 링크에서 확인해 주세요.")
