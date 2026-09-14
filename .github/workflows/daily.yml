@@ -51,7 +51,7 @@ jobs:
           export RUN_DATE=$(TZ=Asia/Seoul date +'%Y-%m-%d')
           RUN_DIR="output/$RUN_DATE"
           if [ -d "$RUN_DIR" ]; then
-            NEW_POSTS=$(find "$RUN_DIR" -maxdepth 1 -type f -name '*.md' ! -name 'boan_news_digest.md' | wc -l | tr -d ' ')
+            NEW_POSTS=$(find "$RUN_DIR" -maxdepth 1 -type f -name '*.md' | wc -l | tr -d ' ')
             NAVER_POSTS=$(find "$RUN_DIR" -maxdepth 1 -type f -name '*_naver.md' | wc -l | tr -d ' ')
             GOOGLE_POSTS=$(find "$RUN_DIR" -maxdepth 1 -type f -name '*_google.md' | wc -l | tr -d ' ')
           else

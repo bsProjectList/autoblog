@@ -14,7 +14,7 @@ from src.analyzer.importance import score_and_select_top10
 from src.generator.blog import generate_naver_post, generate_google_post
 from src.models import BlogPost, NewsItem
 from src.seo_check import run_seo_check
-from src.boan_digest import run_boan_digest
+from src.boan_digest import collect_boan_top10, send_to_discord
 
 OUTPUT_DIR = Path("output")
 TOP_N = 3  # 비용 절감을 위해 하루 3개 뉴스만 선정 (네이버·구글 생성 시 최대 6개 글)
@@ -75,8 +75,10 @@ def run_pipeline(top_n: int = TOP_N, seo_generators=None, on_log=print) -> list:
     on_log(f"{divider}\n")
 
     try:
-        digest_path = run_boan_digest(OUTPUT_DIR, date_str=date_str)
-        on_log(f"[보안뉴스] 카테고리별 TOP 10 저장: {digest_path}")
+        boan_categories = collect_boan_top10(limit=10)
+        boan_total = sum(len(items) for items in boan_categories.values())
+        send_to_discord(boan_categories, date_str)
+        on_log(f"[보안뉴스] 카테고리별 TOP 10 Discord 전송 대상: {boan_total}건")
     except Exception as exc:
         on_log(f"[보안뉴스] 다이제스트 처리 실패(기존 블로그 파이프라인은 계속): {exc}")
 

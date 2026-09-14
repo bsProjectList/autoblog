@@ -6,6 +6,7 @@ st.set_page_config(page_title="AutoBlog", page_icon=":material/newspaper:", layo
 
 page = st.navigation(
     [
+        st.Page("app_pages/boan_news.py", title="보안뉴스", icon=":material/security:"),
         st.Page("app_pages/viewer.py", title="생성된 글 보기", icon=":material/article:"),
         st.Page("app_pages/affiliate.py", title="제휴 글 생성", icon=":material/storefront:"),
         st.Page("app_pages/blog_writer.py", title="블로그 글 작성", icon=":material/edit_note:"),

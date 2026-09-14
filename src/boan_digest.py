@@ -5,8 +5,6 @@ from __future__ import annotations
 import os
 import re
 import time
-from datetime import datetime
-from pathlib import Path
 import json
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -70,20 +68,6 @@ def collect_boan_top10(limit: int = 10) -> dict[str, list[NewsItem]]:
     return result
 
 
-def render_markdown(categories: dict[str, list[NewsItem]], date_str: str) -> str:
-    lines = [f"# 보안뉴스 카테고리별 TOP 10 ({date_str})", "", "> 각 카테고리 RSS의 최신 기사 10건입니다.", ""]
-    for category, items in categories.items():
-        lines.extend([f"## {category}", ""])
-        if not items:
-            lines.extend(["수집된 기사가 없습니다.", ""])
-            continue
-        for index, item in enumerate(items, start=1):
-            lines.append(f"{index}. [{item.title}]({item.url})")
-            lines.append(f"   - {item.summary}")
-        lines.append("")
-    return "\n".join(lines)
-
-
 def _discord_chunks(categories: dict[str, list[NewsItem]], date_str: str, max_chars: int = 1900) -> list[str]:
     chunks: list[str] = []
     current = f"🛡️ 보안뉴스 카테고리별 TOP 10 ({date_str})\n"
@@ -129,14 +113,3 @@ def send_to_discord(categories: dict[str, list[NewsItem]], date_str: str) -> int
     return sent
 
 
-def run_boan_digest(output_dir: Path, date_str: str | None = None) -> Path:
-    date_str = date_str or datetime.now().strftime("%Y-%m-%d")
-    categories = collect_boan_top10(limit=10)
-    target_dir = output_dir / date_str
-    target_dir.mkdir(parents=True, exist_ok=True)
-    digest_path = target_dir / "boan_news_digest.md"
-    digest_path.write_text(render_markdown(categories, date_str), encoding="utf-8")
-    send_to_discord(categories, date_str)
-    total = sum(len(items) for items in categories.values())
-    print(f"[보안뉴스] 카테고리 {len(categories)}개, 기사 {total}개 저장: {digest_path}")
-    return digest_path
