@@ -14,6 +14,7 @@ from src.analyzer.importance import score_and_select_top10
 from src.generator.blog import generate_naver_post, generate_google_post
 from src.models import BlogPost, NewsItem
 from src.seo_check import run_seo_check
+from src.boan_digest import run_boan_digest
 
 OUTPUT_DIR = Path("output")
 TOP_N = 3  # 비용 절감을 위해 하루 3개 뉴스만 선정 (네이버·구글 생성 시 최대 6개 글)
@@ -72,6 +73,12 @@ def run_pipeline(top_n: int = TOP_N, seo_generators=None, on_log=print) -> list:
     on_log(f"\n{divider}")
     on_log(f"  AutoBlog Pipeline — {date_str}")
     on_log(f"{divider}\n")
+
+    try:
+        digest_path = run_boan_digest(OUTPUT_DIR, date_str=date_str)
+        on_log(f"[보안뉴스] 카테고리별 TOP 10 저장: {digest_path}")
+    except Exception as exc:
+        on_log(f"[보안뉴스] 다이제스트 처리 실패(기존 블로그 파이프라인은 계속): {exc}")
 
     # ── Step 1: Collect ──────────────────────────────────────────
     on_log("[1단계] RSS 피드에서 뉴스 수집 중...")
