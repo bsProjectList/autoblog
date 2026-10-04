@@ -1,0 +1,260 @@
+[
+  {
+    "file": "output/2026-10-04/01_ai-hacking-financial-security_naver.md",
+    "title": "AI 해킹의 진화: 금융권 정보 유출과 그 영향",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "26자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2897자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "warn",
+        "detail": "500자 넘는 긴 문단 1개 발견 — 문단을 더 짧게 나누는 걸 권장."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-10-04/01_ai-hacking-financial-security_google.md",
+    "title": "AI 해킹으로 인한 금융 보안 위협과 그 대응 방안",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "28자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "warn",
+        "detail": "55자 — 권장 100~160자."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2701자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-10-04/02_samsung-quarterly-results_naver.md",
+    "title": "삼성전자, 분기 영업익 첫 100조원 돌파! AI 수요가 이끈 메모리 반도체 호황",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "45자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2436자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-10-04/02_samsung-quarterly-results_google.md",
+    "title": "삼성전자, 분기 영업익 첫 100조원 넘본다",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "24자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "warn",
+        "detail": "69자 — 권장 100~160자."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2604자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-10-04/03_trump-us-investment-lng_naver.md",
+    "title": "트럼프 대통령의 대미 투자 압박, 한국 경제에 미치는 영향은?",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "34자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2873자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-10-04/03_trump-us-investment-lng_google.md",
+    "title": "트럼프, 대미 투자 압박: 84억 달러 EOR 사업과 알래스카 LNG의 논란",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "42자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "warn",
+        "detail": "70자 — 권장 100~160자."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "19개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2799자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  }
+]
