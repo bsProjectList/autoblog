@@ -1,0 +1,260 @@
+[
+  {
+    "file": "output/2026-11-08/01_코스피-폭락-반등_naver.md",
+    "title": "코스피, 11% 폭락의 원인과 향후 전망은?",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "24자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2343자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-11-08/01_코스피-폭락-반등_google.md",
+    "title": "어쩌다 이 지경까지…계좌 열기가 무섭다: 11% 폭락한 코스피, 반등할까",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "40자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "warn",
+        "detail": "55자 — 권장 100~160자."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2846자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-11-08/02_삼성전자-현금-보유액-200조_naver.md",
+    "title": "삼성전자, 현금 보유액 최초 200조원 돌파! 주주환원과 미래 투자의 새 전환점",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "44자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2929자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "warn",
+        "detail": "500자 넘는 긴 문단 1개 발견 — 문단을 더 짧게 나누는 걸 권장."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-11-08/02_삼성전자-현금-보유액-200조_google.md",
+    "title": "삼성전자 현금 보유액 첫 200조 돌파…1년 새 2배 불어",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "32자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "warn",
+        "detail": "59자 — 권장 100~160자."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2620자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-11-08/03_외국인-투자-삼성전자-매도_naver.md",
+    "title": "외국인 투자자, 삼성전자와 SK하이닉스에 대한 대규모 매도: 경제가 불안한 이유",
+    "seo_type": "naver",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "44자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "info",
+        "detail": "없음 (이 글 형식엔 필수 아님)."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2858자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  },
+  {
+    "file": "output/2026-11-08/03_외국인-투자-삼성전자-매도_google.md",
+    "title": "외국인, 지난주 삼전닉스만 7.6조 던졌다…국내 ETF 시총도 400兆 무너져",
+    "seo_type": "google",
+    "checks": [
+      {
+        "label": "제목 길이",
+        "status": "pass",
+        "detail": "43자 — 적절합니다."
+      },
+      {
+        "label": "메타 디스크립션",
+        "status": "warn",
+        "detail": "71자 — 권장 100~160자."
+      },
+      {
+        "label": "소제목(H2) 구조",
+        "status": "pass",
+        "detail": "9개."
+      },
+      {
+        "label": "태그 개수",
+        "status": "pass",
+        "detail": "20개."
+      },
+      {
+        "label": "이미지",
+        "status": "warn",
+        "detail": "본문에 이미지가 없습니다."
+      },
+      {
+        "label": "본문 분량",
+        "status": "warn",
+        "detail": "약 2857자 — 조금 더 늘리는 걸 권장."
+      },
+      {
+        "label": "가독성(문단 길이)",
+        "status": "pass",
+        "detail": "문단 길이 적절."
+      }
+    ],
+    "status": "pass"
+  }
+]
